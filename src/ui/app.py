@@ -1,12 +1,12 @@
 """Streamlit entrypoint for the AI Travel Itinerary Generator."""
 from __future__ import annotations
 
-import json
-
 import streamlit as st
 
 from src.config import setup_logging
-from src.db import init_db
+from src.db import get_venues_by_destination, init_db
+from src.matching.embeddings import embed_and_cache
+from src.matching.scoring import match_venues
 from src.ui.forms import render_preference_form, render_sample_buttons
 
 log = setup_logging()
@@ -20,7 +20,6 @@ def main() -> None:
         initial_sidebar_state="collapsed",
     )
 
-    # Ensure DB exists (idempotent)
     init_db()
 
     # ── Header ────────────────────────────────────────────────────────────────
@@ -38,18 +37,37 @@ def main() -> None:
     # ── Preference form ───────────────────────────────────────────────────────
     preferences = render_preference_form()
 
-    # ── Post-submission placeholder ───────────────────────────────────────────
+    # ── Matching pipeline (Phases 1.3) ────────────────────────────────────────
     if preferences is not None:
         log.info("Preferences submitted: %s", preferences)
-        st.success("Preferences received! Itinerary generation coming in Phase 1.4.")
+        destination = preferences["destination"]
 
-        with st.expander("Normalized preference object (debug)", expanded=True):
+        venues = get_venues_by_destination(destination)
+        if not venues:
+            st.warning(
+                f"No cached venues for **{destination}**. "
+                "Run `python -m src.ingestion.overpass --destination \"Goa, India\"` first."
+            )
+            return
+
+        with st.spinner("Embedding venues and matching preferences…"):
+            embed_and_cache(destination)
+            venues = get_venues_by_destination(destination)
+            matched = match_venues(venues, preferences)
+
+        st.success(f"Matched **{len(matched)}** venues to your preferences.")
+
+        with st.expander("Top matched venues (debug)", expanded=False):
+            for v in matched[:10]:
+                st.write(
+                    f"**{v['name']}** — {', '.join(v['categories'])} "
+                    f"| score: {v.get('similarity_score', 0):.3f}"
+                )
+
+        with st.expander("Preference object (debug)", expanded=False):
             st.json(preferences)
 
-        st.info(
-            "Pipeline stages remaining: venue matching → clustering → "
-            "LLM assembly → map display."
-        )
+        st.info("Next: geographic clustering → LLM itinerary assembly → map display.")
 
 
 if __name__ == "__main__":

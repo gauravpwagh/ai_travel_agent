@@ -139,6 +139,15 @@ def get_venues_by_destination(destination: str) -> list[dict[str, Any]]:
     return [_row_to_venue(r) for r in rows]
 
 
+def update_venue_embedding(venue_id: int, embedding_bytes: bytes) -> None:
+    """Write a cached embedding BLOB for a venue row."""
+    with connect() as conn:
+        conn.execute(
+            "UPDATE venues SET embedding = ? WHERE id = ?",
+            (embedding_bytes, venue_id),
+        )
+
+
 def venue_count(destination: str) -> int:
     with connect() as conn:
         row = conn.execute(
