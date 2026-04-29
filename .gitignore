@@ -1,0 +1,32 @@
+# Secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+venv/
+env/
+.venv/
+
+# Data (don't commit caches or logs)
+data/travel.db
+data/cache/
+data/logs/
+eval/results/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Notebooks
+.ipynb_checkpoints/

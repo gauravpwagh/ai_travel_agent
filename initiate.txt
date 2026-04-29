@@ -1,0 +1,10 @@
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+Copy-Item .env.example .env
+notepad .env
+# (Notepad opens; paste GROQ_API_KEY, save, close it, then continue:)
+python -m src.db init
+python scripts\check_apis.py
+python -m src.ingestion.overpass --destination "Goa, India"
+deactivate
