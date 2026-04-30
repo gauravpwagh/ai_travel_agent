@@ -8,6 +8,7 @@ numpy>=1.26.0
 pandas>=2.1.0
 scikit-learn>=1.3.0
 sentence-transformers>=2.7.0
+torchvision>=0.15.0
 
 # LLM
 groq>=0.11.0
