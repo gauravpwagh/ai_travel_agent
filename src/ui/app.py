@@ -1,4 +1,11 @@
-"""Streamlit entrypoint for the AI Travel Itinerary Generator."""
+"""Streamlit entrypoint for the AI Travel Itinerary Generator.
+
+Session-state caching (Phase 2.4): the generated itinerary is stored in
+st.session_state after the pipeline completes. Feedback button clicks trigger
+a Streamlit rerun, but the form is not re-submitted so preferences is None —
+the app reads from session state and re-renders without re-running the pipeline.
+A new form submission clears the cache and runs the pipeline fresh.
+"""
 from __future__ import annotations
 
 import streamlit as st
@@ -10,6 +17,11 @@ from src.generation.itinerary import USER_ID, build_itinerary
 from src.matching.embeddings import embed_and_cache
 from src.matching.scoring import match_venues
 from src.routing.ors import annotate_itinerary_travel_times
+from src.ui.feedback import (
+    clear_itinerary_state,
+    load_itinerary_state,
+    save_itinerary_state,
+)
 from src.ui.forms import render_preference_form, render_sample_buttons
 from src.ui.itinerary_view import render_itinerary
 from src.validation.checks import validate_and_fix_itinerary
@@ -39,10 +51,32 @@ def main() -> None:
 
     preferences = render_preference_form()
 
-    if preferences is None:
-        return
+    # ── New form submission → clear cache, run pipeline ───────────────────────
+    if preferences is not None:
+        clear_itinerary_state()
+        _run_pipeline(preferences)
 
-    log.info("Preferences submitted: %s", preferences)
+    # ── Render from session state (new generation OR feedback rerun) ──────────
+    state = load_itinerary_state()
+    if state:
+        st.success(
+            f"Your {state['preferences']['days']}-day itinerary for "
+            f"**{state['preferences']['destination']}** is ready!"
+        )
+        st.divider()
+        render_itinerary(
+            itinerary=state["itinerary"],
+            clusters=state["clusters"],
+            issues=state["issues"],
+            itinerary_id=state["itinerary_id"],
+            venue_lookup=state["venue_lookup"],
+        )
+        with st.expander("Preferences (debug)", expanded=False):
+            st.json(state["preferences"])
+
+
+def _run_pipeline(preferences: dict) -> None:
+    """Execute all generation steps and store the result in session state."""
     destination = preferences["destination"]
 
     # ── 1. Venue retrieval ────────────────────────────────────────────────────
@@ -87,6 +121,7 @@ def main() -> None:
             itinerary, clusters, venue_lookup, preferences
         )
 
+    # ── 7. Persist to SQLite ──────────────────────────────────────────────────
     itinerary_id = insert_itinerary(
         user_id=USER_ID,
         destination=destination,
@@ -96,14 +131,15 @@ def main() -> None:
     )
     log.info(f"Saved itinerary id={itinerary_id}")
 
-    # ── 7. Display ────────────────────────────────────────────────────────────
-    st.success(f"Your {preferences['days']}-day itinerary for **{destination}** is ready!")
-    st.divider()
-
-    render_itinerary(itinerary, clusters, issues)
-
-    with st.expander("Preferences (debug)", expanded=False):
-        st.json(preferences)
+    # ── 8. Cache in session state ─────────────────────────────────────────────
+    save_itinerary_state(
+        itinerary=itinerary,
+        clusters=clusters,
+        issues=issues,
+        itinerary_id=itinerary_id,
+        venue_lookup=venue_lookup,
+        preferences=preferences,
+    )
 
 
 if __name__ == "__main__":

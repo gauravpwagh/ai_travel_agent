@@ -1,17 +1,13 @@
 """Day-tab itinerary display: map (left) + venue card list (right).
 
-This is the value moment of the app — everything the user sees after
-generation lives here.
-
-Usage:
-    from src.ui.itinerary_view import render_itinerary
-    render_itinerary(itinerary, clusters)
+Phase 2.4: each venue card now carries 👍 👎 🔄 feedback buttons.
 """
 from __future__ import annotations
 
 import streamlit as st
 
 from src.routing.ors import day_total_transit_minutes
+from src.ui.feedback import render_feedback_buttons
 from src.ui.map_view import render_day_map
 from src.validation.checks import ValidationIssue
 
@@ -38,9 +34,11 @@ def render_itinerary(
     itinerary:    list[dict],
     clusters:     list[list[dict]],
     issues:       list[ValidationIssue] | None = None,
+    itinerary_id: int | None = None,
+    venue_lookup: dict[str, dict] | None = None,
 ) -> None:
     """Render all days as Streamlit tabs, each with a map and venue cards."""
-    venue_lookup = _build_venue_lookup(clusters)
+    _venue_lookup = venue_lookup or _build_venue_lookup(clusters)
     issues = issues or []
 
     tab_labels = [
@@ -51,25 +49,24 @@ def render_itinerary(
     for tab, day in zip(tabs, itinerary):
         day_issues = [iss for iss in issues if iss.day_number == day["day_number"]]
         with tab:
-            _render_day(day, venue_lookup, day_issues)
+            _render_day(day, _venue_lookup, day_issues, itinerary_id)
 
 
 # ── Per-day layout ────────────────────────────────────────────────────────────
 
 def _render_day(
-    day:         dict,
+    day:          dict,
     venue_lookup: dict[str, dict],
-    issues:      list[ValidationIssue],
+    issues:       list[ValidationIssue],
+    itinerary_id: int | None,
 ) -> None:
     slots = day.get("slots", [])
     if not slots:
         st.warning("No venues for this day.")
         return
 
-    # Validation issue banners (top of tab)
     _render_issue_banners(issues)
 
-    # Transit summary (driven by travel-time data, not validation)
     total_min = day_total_transit_minutes(day)
     if total_min > 0:
         st.caption(f"🚶 ~{total_min} min total transit for this day")
@@ -80,7 +77,7 @@ def _render_day(
         render_day_map(slots, venue_lookup)
 
     with list_col:
-        _render_venue_cards(slots)
+        _render_venue_cards(slots, day["day_number"], itinerary_id, venue_lookup)
 
 
 # ── Validation issue banners ──────────────────────────────────────────────────
@@ -91,6 +88,7 @@ _CHECK_ICON: dict[str, str] = {
     "transit":       "🚶",
     "rating":        "⭐",
 }
+
 
 def _render_issue_banners(issues: list[ValidationIssue]) -> None:
     if not issues:
@@ -108,30 +106,41 @@ def _render_issue_banners(issues: list[ValidationIssue]) -> None:
 
 # ── Venue card list ───────────────────────────────────────────────────────────
 
-def _render_venue_cards(slots: list[dict]) -> None:
-    for n, slot in enumerate(slots, 1):
-        _render_card(n, slot)
+def _render_venue_cards(
+    slots:        list[dict],
+    day_number:   int,
+    itinerary_id: int | None,
+    venue_lookup: dict[str, dict],
+) -> None:
+    for slot_idx, slot in enumerate(slots):
+        _render_card(slot_idx + 1, slot, day_number, slot_idx, itinerary_id, venue_lookup)
         _render_leg_connector(slot)
 
 
-def _render_card(n: int, slot: dict) -> None:
+def _render_card(
+    n:            int,
+    slot:         dict,
+    day_number:   int,
+    slot_idx:     int,
+    itinerary_id: int | None,
+    venue_lookup: dict[str, dict],
+) -> None:
     name     = slot.get("venue_name", "Unknown")
     time     = slot.get("time", "")
     cat      = slot.get("category", "")
     desc     = slot.get("description", "")
     note     = slot.get("travel_note")
     duration = slot.get("duration_minutes")
+    osm_id   = slot.get("osm_id", "")
     emoji    = _CATEGORY_EMOJI.get(cat, _DEFAULT_EMOJI)
 
-    # Number badge + time on one line
+    # Number badge + time
     badge_col, time_col = st.columns([1, 4])
     with badge_col:
         st.markdown(
-            f'<div style="'
-            f"background:#4a90d9;color:#fff;border-radius:50%;"
-            f"width:32px;height:32px;"
-            f"display:flex;align-items:center;justify-content:center;"
-            f'font-weight:700;font-size:14px">{n}</div>',
+            f'<div style="background:#4a90d9;color:#fff;border-radius:50%;'
+            f'width:32px;height:32px;display:flex;align-items:center;'
+            f'justify-content:center;font-weight:700;font-size:14px">{n}</div>',
             unsafe_allow_html=True,
         )
     with time_col:
@@ -146,15 +155,23 @@ def _render_card(n: int, slot: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # Description
     if desc:
         st.caption(desc)
 
-    # Travel note
     if note:
         st.markdown(
             f'<p style="color:#888;font-size:12px;margin-top:2px">🚶 {note}</p>',
             unsafe_allow_html=True,
+        )
+
+    # Feedback buttons
+    if itinerary_id is not None and osm_id:
+        render_feedback_buttons(
+            day_number=day_number,
+            slot_idx=slot_idx,
+            osm_id=osm_id,
+            itinerary_id=itinerary_id,
+            venue_lookup=venue_lookup,
         )
 
     st.markdown(
@@ -167,7 +184,7 @@ def _render_leg_connector(slot: dict) -> None:
     """Render a compact travel-time strip between two venue cards."""
     leg = slot.get("travel_to_next")
     if not leg:
-        return  # last slot — no connector
+        return
 
     mins     = leg.get("duration_min", 0)
     dist_m   = leg.get("distance_m", 0)
@@ -177,7 +194,7 @@ def _render_leg_connector(slot: dict) -> None:
 
     st.markdown(
         f'<div style="display:flex;align-items:center;gap:8px;'
-        f"margin:4px 0 4px 8px;color:#888;font-size:12px\">"
+        f'margin:4px 0 4px 8px;color:#888;font-size:12px">'
         f"<span>🚶</span>"
         f"<span><b>{mins} min</b> · {dist_str}{est_tag}</span>"
         f"</div>",
@@ -188,7 +205,6 @@ def _render_leg_connector(slot: dict) -> None:
 # ── Venue lookup ──────────────────────────────────────────────────────────────
 
 def _build_venue_lookup(clusters: list[list[dict]]) -> dict[str, dict]:
-    """Build osm_id → venue dict from all clusters for quick coordinate lookup."""
     lookup: dict[str, dict] = {}
     for cluster in clusters:
         for venue in cluster:
