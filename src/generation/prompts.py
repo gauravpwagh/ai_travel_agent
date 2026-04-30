@@ -46,6 +46,51 @@ Use this exact schema:
 {schema}\
 """
 
+# ── Free-text preference extraction ──────────────────────────────────────────
+
+PREFERENCE_EXTRACT_SYSTEM = """\
+You are a travel preference parser. Extract structured travel preferences \
+from the user's free-form text.
+
+Rules:
+- Return ONLY valid JSON matching the schema. No prose, no markdown fences.
+- Set a field to null if the text gives no clear signal for it.
+- interests must only contain values from this exact list:
+  food, history, nature, nightlife, shopping, art, beaches
+- budget_tier must be one of: budget, mid-range, luxury (or null)
+- pace must be one of: relaxed, moderate, packed (or null)
+- days must be an integer between 2 and 7 (or null)
+- party_size must be a positive integer (or null)\
+"""
+
+# Placeholder: {free_text}, {schema}
+PREFERENCE_EXTRACT_USER = """\
+Extract travel preferences from this text:
+
+\"\"\"{free_text}\"\"\"
+
+Output JSON with this exact schema:
+{schema}\
+"""
+
+PREFERENCE_EXTRACT_RETRY = """\
+Your previous response could not be parsed as valid JSON. \
+Return ONLY the JSON object — no explanation, no markdown, no extra text. \
+Schema:
+{schema}\
+"""
+
+PREFERENCE_EXTRACT_SCHEMA = """\
+{
+  "destination": "<city name string or null>",
+  "days": <integer 2-7 or null>,
+  "party_size": <positive integer or null>,
+  "budget_tier": "<budget|mid-range|luxury or null>",
+  "interests": ["<interest>", ...],
+  "pace": "<relaxed|moderate|packed or null>"
+}\
+"""
+
 # ── Schema shown to the LLM ───────────────────────────────────────────────────
 
 DAY_ITINERARY_SCHEMA = """\

@@ -1,10 +1,14 @@
 """Streamlit preference input form.
 
-Returns a normalized preference dict on submission. Free-text input is Phase 2.
+Phase 2.3: includes a free-text textarea whose contents are sent to the
+LLM extractor after submission. Extracted preferences are merged with
+the form values (form overrides on conflict; interests are unioned).
 """
 from __future__ import annotations
 
 import streamlit as st
+
+from src.generation.extractor import extract_preferences, extraction_summary, merge_preferences
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -129,7 +133,19 @@ def render_preference_form() -> dict | None:
                 index=_form_default("pace", PACE_OPTIONS, "moderate"),
             )
 
-        st.markdown("**Interests** *(pick at least one)*")
+        st.markdown("**Tell us about your ideal trip** *(optional — the AI will extract extra preferences)*")
+        free_text = st.text_area(
+            label="free_text",
+            label_visibility="collapsed",
+            placeholder=(
+                "e.g. "I want a relaxed beach holiday with great seafood. "
+                "We're a couple on a mid-range budget — no rushing around.""
+            ),
+            height=90,
+            key="free_text_input",
+        )
+
+        st.markdown("**Interests** *(pick at least one — or describe them above)*")
         interest_cols = st.columns(4)
         selected_interests: list[str] = []
         preset_interests: list[str] = st.session_state.get("_preset", {}).get(
@@ -153,11 +169,7 @@ def render_preference_form() -> dict | None:
         del st.session_state["_preset"]
 
     if submitted:
-        if not selected_interests:
-            st.error("Please select at least one interest.")
-            return None
-
-        prefs: dict = {
+        form_prefs: dict = {
             "destination": destination,
             "days": int(days),
             "party_size": int(party_size),
@@ -165,6 +177,29 @@ def render_preference_form() -> dict | None:
             "interests": selected_interests,
             "pace": pace,
         }
+
+        # ── Free-text extraction + merge ──────────────────────────────────
+        if free_text.strip():
+            with st.spinner("✨ Extracting preferences from your description…"):
+                extracted = extract_preferences(free_text.strip())
+            prefs = merge_preferences(form_prefs, extracted)
+
+            summary = extraction_summary(extracted)
+            if summary:
+                added = prefs.get("_extracted_interests", [])
+                badge = f" · added interests: **{', '.join(added)}**" if added else ""
+                st.info(f"✨ Extracted from your text — {summary}{badge}")
+        else:
+            extracted = {}
+            prefs = form_prefs
+
+        # Validation: at least one interest (from form or extraction)
+        if not prefs.get("interests"):
+            st.error("Please select at least one interest, or describe your trip above.")
+            return None
+
+        # Remove internal keys before returning
+        prefs.pop("_extracted_interests", None)
         return prefs
 
     return None
