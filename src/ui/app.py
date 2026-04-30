@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.clustering.geo_clusters import cluster_venues
 from src.config import setup_logging
 from src.db import get_venues_by_destination, init_db
 from src.matching.embeddings import embed_and_cache
@@ -55,19 +56,27 @@ def main() -> None:
             venues = get_venues_by_destination(destination)
             matched = match_venues(venues, preferences)
 
-        st.success(f"Matched **{len(matched)}** venues to your preferences.")
+        with st.spinner("Clustering venues into day groups…"):
+            clusters = cluster_venues(matched, preferences["days"])
 
-        with st.expander("Top matched venues (debug)", expanded=False):
-            for v in matched[:10]:
-                st.write(
-                    f"**{v['name']}** — {', '.join(v['categories'])} "
-                    f"| score: {v.get('similarity_score', 0):.3f}"
-                )
+        st.success(
+            f"Matched **{len(matched)}** venues → "
+            f"grouped into **{len(clusters)}** day clusters."
+        )
+
+        for i, cluster in enumerate(clusters):
+            with st.expander(f"Day {i + 1} — {len(cluster)} venues", expanded=False):
+                for v in cluster:
+                    st.write(
+                        f"**{v['name']}** — {', '.join(v['categories'])} "
+                        f"| score: {v.get('similarity_score', 0):.3f} "
+                        f"| ({v['lat']:.4f}, {v['lon']:.4f})"
+                    )
 
         with st.expander("Preference object (debug)", expanded=False):
             st.json(preferences)
 
-        st.info("Next: geographic clustering → LLM itinerary assembly → map display.")
+        st.info("Next: LLM itinerary assembly → map display.")
 
 
 if __name__ == "__main__":
