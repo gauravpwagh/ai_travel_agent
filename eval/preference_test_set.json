@@ -1,0 +1,413 @@
+{
+  "_meta": {
+    "description": "Hand-labeled free-text → preference extraction test set (Phase 2.5)",
+    "total_cases": 28,
+    "groups": {
+      "explicit": "Cases where all or most fields are clearly stated (IDs 1-8)",
+      "partial":  "Cases where 1-3 fields are absent from the text (IDs 9-16)",
+      "inferred": "Cases requiring mild inference / paraphrasing (IDs 17-22)",
+      "edge":     "Edge cases: vague, contradictory, or out-of-range inputs (IDs 23-28)"
+    },
+    "valid_interests": ["food","history","nature","nightlife","shopping","art","beaches"],
+    "valid_budget":    ["budget","mid-range","luxury"],
+    "valid_pace":      ["relaxed","moderate","packed"],
+    "days_range":      [2, 7],
+    "null_means":      "field not mentioned / cannot be inferred"
+  },
+  "cases": [
+
+    {
+      "id": "E01",
+      "group": "explicit",
+      "text": "Planning a 3-day solo beach vacation in Goa on a tight budget. I want a relaxed pace — mostly beaches and seafood restaurants.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["beaches", "food"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "E02",
+      "group": "explicit",
+      "text": "Two of us are planning a 2-day luxury escape to Goa. We want a packed itinerary — art galleries, upscale restaurants, and nightlife.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 2,
+        "party_size": 2,
+        "budget_tier": "luxury",
+        "interests": ["art", "food", "nightlife"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "E03",
+      "group": "explicit",
+      "text": "Family trip of 4 (including 2 kids) to Goa for 5 days. Mid-range budget, moderate pace. The kids love beaches and nature, and we always enjoy trying local food.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 5,
+        "party_size": 4,
+        "budget_tier": "mid-range",
+        "interests": ["beaches", "nature", "food"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "E04",
+      "group": "explicit",
+      "text": "Solo 7-day history and culture deep-dive in Goa. I'm a budget traveler and prefer a relaxed pace — forts, churches, and old Portuguese architecture.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 7,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["history", "art"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "E05",
+      "group": "explicit",
+      "text": "Romantic anniversary trip to Goa for 2, 4 days, luxury budget. We love fine dining, wine bars, beach sunsets, and art. Moderate pace — no rushing.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 4,
+        "party_size": 2,
+        "budget_tier": "luxury",
+        "interests": ["food", "beaches", "art"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "E06",
+      "group": "explicit",
+      "text": "6-day Goa backpacker trip, just me. Budget-mode all the way — beaches, street food, nightlife. Packed schedule, I want to see everything.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 6,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["beaches", "food", "nightlife"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "E07",
+      "group": "explicit",
+      "text": "Girls trip to Goa, group of 4, 3 days. Mid-range budget. We want shopping, nightlife, and beach time. Packed pace — we don't waste daylight.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": 4,
+        "budget_tier": "mid-range",
+        "interests": ["shopping", "nightlife", "beaches"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "E08",
+      "group": "explicit",
+      "text": "5-day heritage walk trip in Goa for 2. Mid-range budget, relaxed pace. Mainly history, art, and nature — we love museums, old churches, and botanical gardens.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 5,
+        "party_size": 2,
+        "budget_tier": "mid-range",
+        "interests": ["history", "art", "nature"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "P09",
+      "group": "partial",
+      "text": "Quick trip to Goa — mostly want beaches and good food. No fixed plan yet.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": null,
+        "party_size": null,
+        "budget_tier": null,
+        "interests": ["beaches", "food"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "P10",
+      "group": "partial",
+      "text": "Solo trip to explore Goa's nightlife and bar scene. Mid-range budget.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": null,
+        "party_size": 1,
+        "budget_tier": "mid-range",
+        "interests": ["nightlife"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "P11",
+      "group": "partial",
+      "text": "4-day trip with my family — there are 4 of us. We love being in nature and hiking.",
+      "expected": {
+        "destination": null,
+        "days": 4,
+        "party_size": 4,
+        "budget_tier": null,
+        "interests": ["nature"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "P12",
+      "group": "partial",
+      "text": "3-day budget trip to Goa focused on history and heritage walks.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": null,
+        "budget_tier": "budget",
+        "interests": ["history"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "P13",
+      "group": "partial",
+      "text": "Luxury 5-day Goa trip for two. We're flexible on activities — just want to relax.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 5,
+        "party_size": 2,
+        "budget_tier": "luxury",
+        "interests": [],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "P14",
+      "group": "partial",
+      "text": "Just want to eat my way through Goa and do some shopping. Keeping it super relaxed.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": null,
+        "party_size": null,
+        "budget_tier": null,
+        "interests": ["food", "shopping"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "P15",
+      "group": "partial",
+      "text": "Heading to Goa with 6 friends for about a week. We're all big beach people — want to spend most days by the sea.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 7,
+        "party_size": 6,
+        "budget_tier": null,
+        "interests": ["beaches"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "P16",
+      "group": "partial",
+      "text": "4-day mid-range trip. Keen on the local food scene and contemporary art.",
+      "expected": {
+        "destination": null,
+        "days": 4,
+        "party_size": null,
+        "budget_tier": "mid-range",
+        "interests": ["food", "art"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "I17",
+      "group": "inferred",
+      "text": "I'm on a very tight budget and want to explore the beaches and try whatever local seafood I can find.",
+      "expected": {
+        "destination": null,
+        "days": null,
+        "party_size": null,
+        "budget_tier": "budget",
+        "interests": ["beaches", "food"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "I18",
+      "group": "inferred",
+      "text": "Looking for a high-end 3-day resort experience in Goa — pure relaxation, no rushing around.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": null,
+        "budget_tier": "luxury",
+        "interests": [],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "I19",
+      "group": "inferred",
+      "text": "Taking my parents to Goa for the weekend. They love temples, botanical gardens, and colonial heritage sites.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 2,
+        "party_size": 2,
+        "budget_tier": null,
+        "interests": ["history", "nature"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "I20",
+      "group": "inferred",
+      "text": "Six of us are going to Goa for a bachelorette party — 3 nights of beach clubs, bars, and dancing.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": 6,
+        "budget_tier": null,
+        "interests": ["nightlife", "beaches"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "I21",
+      "group": "inferred",
+      "text": "Planning a quick Goa visit to check out the art scene and some old Portuguese churches.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": null,
+        "party_size": null,
+        "budget_tier": null,
+        "interests": ["art", "history"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "I22",
+      "group": "inferred",
+      "text": "Backpacking through Goa for a full week. Practically no money — will sleep cheap, eat street food, and see as much as possible.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 7,
+        "party_size": null,
+        "budget_tier": "budget",
+        "interests": ["food"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "X23",
+      "group": "edge",
+      "text": "Just wandering around somewhere warm.",
+      "expected": {
+        "destination": null,
+        "days": null,
+        "party_size": null,
+        "budget_tier": null,
+        "interests": [],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "X24",
+      "group": "edge",
+      "text": "Goa trip.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": null,
+        "party_size": null,
+        "budget_tier": null,
+        "interests": [],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "X25",
+      "group": "edge",
+      "text": "I want a luxury experience but I'm also very budget-conscious and can't spend much.",
+      "expected": {
+        "destination": null,
+        "days": null,
+        "party_size": null,
+        "budget_tier": null,
+        "interests": [],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "X26",
+      "group": "edge",
+      "text": "5-day Goa trip mixing history and beaches, 3 friends, might also hit a museum or two.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 5,
+        "party_size": 3,
+        "budget_tier": null,
+        "interests": ["history", "beaches", "art"],
+        "pace": null
+      }
+    },
+
+    {
+      "id": "X27",
+      "group": "edge",
+      "text": "Planning an extended Goa stay of about 10 days — long enough to really see the whole place.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": null,
+        "party_size": null,
+        "budget_tier": null,
+        "interests": [],
+        "pace": null,
+        "_note": "10 days is out of the 2-7 range; extractor should return null for days"
+      }
+    },
+
+    {
+      "id": "X28",
+      "group": "edge",
+      "text": "Anniversary trip to Goa, just the two of us, 4 days, mid-range budget. We love good food, wine bars, and a bit of nightlife. No museums please.",
+      "expected": {
+        "destination": "Goa, India",
+        "days": 4,
+        "party_size": 2,
+        "budget_tier": "mid-range",
+        "interests": ["food", "nightlife"],
+        "pace": null
+      }
+    }
+
+  ]
+}

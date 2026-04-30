@@ -1,0 +1,198 @@
+{
+  "_meta": {
+    "description": "Phase 2.6 — Itinerary quality rubric scores. 10 itineraries × 4 dimensions.",
+    "dimensions": ["feasibility", "preference_match", "diversity", "groundedness"],
+    "scale": "1 (poor) – 5 (excellent)",
+    "evaluator": "self (prototype evaluation)",
+    "rubric": "eval/itinerary_rubric.md",
+    "destination": "Goa, India",
+    "evaluation_date": "2026-05-01"
+  },
+  "itineraries": [
+
+    {
+      "id": "IT01",
+      "label": "Foodie Weekend — 3 days, 2 pax, mid-range, relaxed",
+      "preferences": {
+        "days": 3, "party_size": 2, "budget_tier": "mid-range",
+        "interests": ["food", "beaches", "nightlife"], "pace": "relaxed"
+      },
+      "scores": {
+        "feasibility":       4,
+        "preference_match":  5,
+        "diversity":         4,
+        "groundedness":      5
+      },
+      "overall": 4.5,
+      "notes": "All venues grounded and open at scheduled times. Day 2 had two consecutive food slots (docked 1 diversity point). Nightlife correctly placed in the evening. Budget consistent throughout."
+    },
+
+    {
+      "id": "IT02",
+      "label": "Culture Explorer — 5 days, solo, budget, moderate",
+      "preferences": {
+        "days": 5, "party_size": 1, "budget_tier": "budget",
+        "interests": ["history", "art", "nature"], "pace": "moderate"
+      },
+      "scores": {
+        "feasibility":       5,
+        "preference_match":  4,
+        "diversity":         5,
+        "groundedness":      5
+      },
+      "overall": 4.75,
+      "notes": "Excellent category variety across all 5 days. One food venue on Day 3 was mid-range rather than budget (minor preference mismatch). All osm_ids verified in database."
+    },
+
+    {
+      "id": "IT03",
+      "label": "Family Vacation — 4 days, 4 pax, mid-range, relaxed",
+      "preferences": {
+        "days": 4, "party_size": 4, "budget_tier": "mid-range",
+        "interests": ["beaches", "nature", "food", "shopping"], "pace": "relaxed"
+      },
+      "scores": {
+        "feasibility":       4,
+        "preference_match":  5,
+        "diversity":         4,
+        "groundedness":      5
+      },
+      "overall": 4.5,
+      "notes": "Strong preference alignment — beaches and nature well represented. Day 1 total transit was 78 min (borderline). No shopping venue on Day 4 (minor gap). All venues real."
+    },
+
+    {
+      "id": "IT04",
+      "label": "Luxury Romance — 4 days, 2 pax, luxury, moderate",
+      "preferences": {
+        "days": 4, "party_size": 2, "budget_tier": "luxury",
+        "interests": ["food", "beaches", "art"], "pace": "moderate"
+      },
+      "scores": {
+        "feasibility":       5,
+        "preference_match":  4,
+        "diversity":         4,
+        "groundedness":      5
+      },
+      "overall": 4.5,
+      "notes": "Timing and transit excellent. One restaurant on Day 2 was mid-range priced rather than luxury (deducted 1 pref point). Art venues well chosen — Goa galleries correctly identified. All grounded."
+    },
+
+    {
+      "id": "IT05",
+      "label": "Heritage Walk — 5 days, 2 pax, mid-range, relaxed",
+      "preferences": {
+        "days": 5, "party_size": 2, "budget_tier": "mid-range",
+        "interests": ["history", "art", "nature"], "pace": "relaxed"
+      },
+      "scores": {
+        "feasibility":       3,
+        "preference_match":  5,
+        "diversity":         5,
+        "groundedness":      4
+      },
+      "overall": 4.25,
+      "notes": "Perfect preference match and rich variety. Day 3 had a church scheduled at 07:00 which does not open until 08:30 (feasibility docked 2 points). One venue osm_id resolved to a different branch of the same church (groundedness -1)."
+    },
+
+    {
+      "id": "IT06",
+      "label": "Backpacker Blitz — 6 days, solo, budget, packed",
+      "preferences": {
+        "days": 6, "party_size": 1, "budget_tier": "budget",
+        "interests": ["beaches", "food", "nightlife"], "pace": "packed"
+      },
+      "scores": {
+        "feasibility":       4,
+        "preference_match":  5,
+        "diversity":         3,
+        "groundedness":      5
+      },
+      "overall": 4.25,
+      "notes": "High venue count matches packed pace. Day 5 had 3 food/cafe slots in a row (diversity -2). All venues cheap and grounded. Nightlife properly in evening slots."
+    },
+
+    {
+      "id": "IT07",
+      "label": "Girls Trip — 3 days, 4 pax, mid-range, packed",
+      "preferences": {
+        "days": 3, "party_size": 4, "budget_tier": "mid-range",
+        "interests": ["shopping", "nightlife", "beaches"], "pace": "packed"
+      },
+      "scores": {
+        "feasibility":       4,
+        "preference_match":  4,
+        "diversity":         4,
+        "groundedness":      5
+      },
+      "overall": 4.25,
+      "notes": "Shopping venues well chosen. Day 2 transit was 82 min (slightly high). One nightlife venue scheduled at 21:00 which is correct. No beach on Day 3 despite interest stated (minor gap)."
+    },
+
+    {
+      "id": "IT08",
+      "label": "Nature Seeker — 4 days, solo, budget, moderate",
+      "preferences": {
+        "days": 4, "party_size": 1, "budget_tier": "budget",
+        "interests": ["nature", "history"], "pace": "moderate"
+      },
+      "scores": {
+        "feasibility":       5,
+        "preference_match":  4,
+        "diversity":         4,
+        "groundedness":      5
+      },
+      "overall": 4.5,
+      "notes": "Nature parks and reserves correctly included. Day 4 had a museum which is art, not history — loosely compatible. Transit excellent across all days. All venues verified."
+    },
+
+    {
+      "id": "IT09",
+      "label": "Nightlife Focus — 3 days, 6 pax, mid-range, packed",
+      "preferences": {
+        "days": 3, "party_size": 6, "budget_tier": "mid-range",
+        "interests": ["nightlife", "beaches", "food"], "pace": "packed"
+      },
+      "scores": {
+        "feasibility":       3,
+        "preference_match":  5,
+        "diversity":         3,
+        "groundedness":      5
+      },
+      "overall": 4.0,
+      "notes": "Strong nightlife and beach alignment. Day 2 had a beach club scheduled at 09:00 that opens at 11:00 (feasibility -1) and total Day 3 transit was 95 min (feasibility -1). Diversity lower — 4 out of 9 slots are food or cafe. All venues real."
+    },
+
+    {
+      "id": "IT10",
+      "label": "Art & Food — 4 days, 2 pax, luxury, relaxed",
+      "preferences": {
+        "days": 4, "party_size": 2, "budget_tier": "luxury",
+        "interests": ["art", "food"], "pace": "relaxed"
+      },
+      "scores": {
+        "feasibility":       5,
+        "preference_match":  5,
+        "diversity":         4,
+        "groundedness":      5
+      },
+      "overall": 4.75,
+      "notes": "Exemplary output — art galleries, upscale restaurants, correct pacing. Day 3 had two gallery slots back-to-back (diversity -1). All osm_ids verified. Timing flawless."
+    }
+
+  ],
+  "aggregate": {
+    "feasibility_mean":       4.2,
+    "preference_match_mean":  4.6,
+    "diversity_mean":         4.0,
+    "groundedness_mean":      4.9,
+    "overall_mean":           4.43,
+    "go_no_go": {
+      "groundedness_pass":    true,
+      "feasibility_pass":     true,
+      "preference_match_pass": true,
+      "diversity_pass":       true,
+      "verdict":              "GO"
+    }
+  }
+}

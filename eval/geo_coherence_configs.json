@@ -1,0 +1,143 @@
+{
+  "_meta": {
+    "description": "Phase 2.7 — 10 preference configurations for geographic coherence evaluation on Manhattan, New York.",
+    "destination": "Manhattan, New York",
+    "target_metric": "median intra-day travel time < 20 min average between consecutive venues",
+    "how_to_run": "python -m eval.run_eval --task coherence --destination 'Manhattan, New York'",
+    "prerequisite": "python -m src.ingestion.overpass --destination 'Manhattan, New York' --radius 8000",
+    "note": "Manhattan is denser than Goa; expect 8-15 min walking legs vs 15-25 min in Goa. Coherence target should be easier to meet."
+  },
+  "configs": [
+
+    {
+      "id": "C01",
+      "label": "Food & Art weekend",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 2,
+        "party_size": 2,
+        "budget_tier": "mid-range",
+        "interests": ["food", "art"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "C02",
+      "label": "History deep-dive",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 3,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["history", "art"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "C03",
+      "label": "Luxury shopping spree",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 2,
+        "party_size": 2,
+        "budget_tier": "luxury",
+        "interests": ["shopping", "food"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "C04",
+      "label": "Nature & Parks",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 2,
+        "party_size": 4,
+        "budget_tier": "budget",
+        "interests": ["nature", "food"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "C05",
+      "label": "Packed culture blitz",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 3,
+        "party_size": 1,
+        "budget_tier": "mid-range",
+        "interests": ["history", "art", "food"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "C06",
+      "label": "Nightlife focus",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 2,
+        "party_size": 4,
+        "budget_tier": "mid-range",
+        "interests": ["nightlife", "food"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "C07",
+      "label": "Family museum tour",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 3,
+        "party_size": 4,
+        "budget_tier": "mid-range",
+        "interests": ["history", "art", "nature"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "C08",
+      "label": "Solo foodie sprint",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 2,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["food", "shopping"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "C09",
+      "label": "Romantic luxury art & food",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 3,
+        "party_size": 2,
+        "budget_tier": "luxury",
+        "interests": ["art", "food", "nightlife"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "C10",
+      "label": "Budget all-interests sampler",
+      "preferences": {
+        "destination": "Manhattan, New York",
+        "days": 3,
+        "party_size": 2,
+        "budget_tier": "budget",
+        "interests": ["food", "history", "nature", "art"],
+        "pace": "moderate"
+      }
+    }
+
+  ]
+}
