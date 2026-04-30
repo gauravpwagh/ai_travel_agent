@@ -56,8 +56,21 @@ CREATE TABLE IF NOT EXISTS feedback (
     FOREIGN KEY (venue_id) REFERENCES venues(id)
 );
 
+CREATE TABLE IF NOT EXISTS travel_times (
+    id INTEGER PRIMARY KEY,
+    origin_osm_id TEXT NOT NULL,
+    dest_osm_id TEXT NOT NULL,
+    profile TEXT NOT NULL,          -- 'foot-walking' | 'driving-car'
+    duration_s INTEGER,             -- seconds
+    distance_m INTEGER,             -- metres
+    source TEXT,                    -- 'ors' | 'haversine'
+    fetched_at TIMESTAMP,
+    UNIQUE(origin_osm_id, dest_osm_id, profile)
+);
+
 CREATE INDEX IF NOT EXISTS idx_venues_destination ON venues(destination);
 CREATE INDEX IF NOT EXISTS idx_feedback_itinerary ON feedback(itinerary_id);
+CREATE INDEX IF NOT EXISTS idx_travel_times ON travel_times(origin_osm_id, dest_osm_id, profile);
 """
 
 
@@ -163,6 +176,55 @@ def insert_itinerary(
             ),
         )
         return cursor.lastrowid
+
+
+def get_travel_time(
+    origin_osm_id: str, dest_osm_id: str, profile: str
+) -> dict[str, Any] | None:
+    """Return cached travel-time row or None on cache miss."""
+    with connect() as conn:
+        row = conn.execute(
+            """
+            SELECT duration_s, distance_m, source
+            FROM travel_times
+            WHERE origin_osm_id = ? AND dest_osm_id = ? AND profile = ?
+            """,
+            (origin_osm_id, dest_osm_id, profile),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def insert_travel_time(
+    origin_osm_id: str,
+    dest_osm_id: str,
+    profile: str,
+    duration_s: int,
+    distance_m: int,
+    source: str,
+) -> None:
+    """Upsert a travel-time result into the cache."""
+    with connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO travel_times
+                (origin_osm_id, dest_osm_id, profile, duration_s, distance_m, source, fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(origin_osm_id, dest_osm_id, profile) DO UPDATE SET
+                duration_s = excluded.duration_s,
+                distance_m = excluded.distance_m,
+                source     = excluded.source,
+                fetched_at = excluded.fetched_at
+            """,
+            (
+                origin_osm_id,
+                dest_osm_id,
+                profile,
+                duration_s,
+                distance_m,
+                source,
+                datetime.utcnow().isoformat(),
+            ),
+        )
 
 
 def update_venue_embedding(venue_id: int, embedding_bytes: bytes) -> None:

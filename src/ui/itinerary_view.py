@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.routing.ors import day_total_transit_minutes
 from src.ui.map_view import render_day_map
 
 # Category → emoji badge shown on venue cards
@@ -54,6 +55,16 @@ def _render_day(day: dict, venue_lookup: dict[str, dict]) -> None:
         st.warning("No venues for this day.")
         return
 
+    # Transit warning banner
+    total_min = day_total_transit_minutes(day)
+    if total_min >= 90:
+        st.warning(
+            f"⚠️ **High transit day** — estimated {total_min} min of travel between venues. "
+            "Consider dropping one stop or reordering."
+        )
+    elif total_min > 0:
+        st.caption(f"🚶 ~{total_min} min total transit for this day")
+
     map_col, list_col = st.columns([3, 2], gap="large")
 
     with map_col:
@@ -68,6 +79,7 @@ def _render_day(day: dict, venue_lookup: dict[str, dict]) -> None:
 def _render_venue_cards(slots: list[dict]) -> None:
     for n, slot in enumerate(slots, 1):
         _render_card(n, slot)
+        _render_leg_connector(slot)
 
 
 def _render_card(n: int, slot: dict) -> None:
@@ -113,8 +125,32 @@ def _render_card(n: int, slot: dict) -> None:
             unsafe_allow_html=True,
         )
 
-    st.markdown("<hr style='margin:10px 0;border:none;border-top:1px solid #eee'>",
-                unsafe_allow_html=True)
+    st.markdown(
+        "<hr style='margin:10px 0;border:none;border-top:1px solid #eee'>",
+        unsafe_allow_html=True,
+    )
+
+
+def _render_leg_connector(slot: dict) -> None:
+    """Render a compact travel-time strip between two venue cards."""
+    leg = slot.get("travel_to_next")
+    if not leg:
+        return  # last slot — no connector
+
+    mins     = leg.get("duration_min", 0)
+    dist_m   = leg.get("distance_m", 0)
+    source   = leg.get("source", "")
+    dist_str = f"{dist_m / 1000:.1f} km" if dist_m >= 1000 else f"{dist_m} m"
+    est_tag  = " *(est.)*" if source == "haversine" else ""
+
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:8px;'
+        f"margin:4px 0 4px 8px;color:#888;font-size:12px\">"
+        f"<span>🚶</span>"
+        f"<span><b>{mins} min</b> · {dist_str}{est_tag}</span>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
 
 
 # ── Venue lookup ──────────────────────────────────────────────────────────────
