@@ -37,11 +37,11 @@ streamlit run src/ui/app.py
 
 - [x] Phase 0: project scaffold, config, DB schema, API connectivity check
 - [x] Phase 1.1: Overpass venue ingestion with OSM tag → category mapping
-- [ ] Phase 1.2: Streamlit preference form
-- [ ] Phase 1.3: Embedding-based preference matching
-- [ ] Phase 1.4: Geographic clustering (k-means)
-- [ ] Phase 1.5: LLM itinerary assembly (Groq)
-- [ ] Phase 1.6: Map + day-tab display
+- [x] Phase 1.2: Streamlit preference form
+- [x] Phase 1.3: Embedding-based preference matching
+- [x] Phase 1.4: Geographic clustering (k-means)
+- [x] Phase 1.5: LLM itinerary assembly (Groq)
+- [x] Phase 1.6: Map + day-tab display
 - [ ] Phase 2: validation, free-text input, evaluation set, user study
 - [ ] Phase 3: 1-2 differentiation features (weather, PDF, multi-city)
 - [ ] Phase 4: report, diagrams, demo video

@@ -186,11 +186,11 @@ CREATE INDEX idx_feedback_itinerary ON feedback(itinerary_id);
 
 ### Phase 0: Setup (Day 1, ~3 hrs)
 
-- [ ] Create repo, virtualenv, requirements.txt
-- [ ] Get Groq API key, ORS API key
-- [ ] Pick primary destination (default: Goa or Mumbai)
-- [ ] Initialize SQLite with schema above
-- [ ] Verify each API responds with a "hello world" script
+- [x] Create repo, virtualenv, requirements.txt
+- [x] Get Groq API key, ORS API key
+- [x] Pick primary destination (default: Goa or Mumbai)
+- [x] Initialize SQLite with schema above
+- [x] Verify each API responds with a "hello world" script
 
 **Deliverable:** Empty repo with verified API connections.
 

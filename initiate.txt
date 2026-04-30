@@ -8,3 +8,12 @@ python -m src.db init
 python scripts\check_apis.py
 python -m src.ingestion.overpass --destination "Goa, India"
 deactivate
+
+
+.\venv\Scripts\Activate.ps1
+python -m src.db init
+streamlit run src/ui/app.py
+
+.\venv\Scripts\Activate.ps1
+python -m src.ingestion.overpass --destination "Goa, India"
+streamlit run src/ui/app.py
