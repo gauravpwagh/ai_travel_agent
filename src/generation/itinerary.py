@@ -65,6 +65,14 @@ def build_itinerary(
     return days
 
 
+# ── Public re-generation hook (used by validation auto-fix) ──────────────────
+
+def regenerate_day(day_num: int, cluster: list[dict], preferences: dict) -> dict:
+    """Re-run LLM assembly for a single day. Called by the validation fix loop."""
+    log.info(f"Regenerating Day {day_num}…")
+    return _assemble_day(day_num, cluster, preferences)
+
+
 # ── Per-day assembly ──────────────────────────────────────────────────────────
 
 def _assemble_day(day_num: int, cluster: list[dict], preferences: dict) -> dict:
