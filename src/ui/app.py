@@ -5,7 +5,8 @@ import streamlit as st
 
 from src.clustering.geo_clusters import cluster_venues
 from src.config import setup_logging
-from src.db import get_venues_by_destination, init_db
+from src.db import get_venues_by_destination, init_db, insert_itinerary
+from src.generation.itinerary import USER_ID, build_itinerary
 from src.matching.embeddings import embed_and_cache
 from src.matching.scoring import match_venues
 from src.ui.forms import render_preference_form, render_sample_buttons
@@ -23,7 +24,6 @@ def main() -> None:
 
     init_db()
 
-    # ── Header ────────────────────────────────────────────────────────────────
     st.title("✈️ AI Personal Travel Planner")
     st.caption(
         "Tell us your preferences and get a day-by-day itinerary with real venues, "
@@ -31,52 +31,88 @@ def main() -> None:
     )
     st.divider()
 
-    # ── Preset buttons ────────────────────────────────────────────────────────
     render_sample_buttons()
     st.divider()
 
-    # ── Preference form ───────────────────────────────────────────────────────
     preferences = render_preference_form()
 
-    # ── Matching pipeline (Phases 1.3) ────────────────────────────────────────
-    if preferences is not None:
-        log.info("Preferences submitted: %s", preferences)
-        destination = preferences["destination"]
+    if preferences is None:
+        return
 
+    log.info("Preferences submitted: %s", preferences)
+    destination = preferences["destination"]
+
+    # ── 1. Venue retrieval ────────────────────────────────────────────────────
+    venues = get_venues_by_destination(destination)
+    if not venues:
+        st.warning(
+            f"No cached venues for **{destination}**. "
+            'Run `python -m src.ingestion.overpass --destination "Goa, India"` first.'
+        )
+        return
+
+    # ── 2. Embedding + matching ───────────────────────────────────────────────
+    with st.spinner("Matching venues to your preferences…"):
+        embed_and_cache(destination)
         venues = get_venues_by_destination(destination)
-        if not venues:
-            st.warning(
-                f"No cached venues for **{destination}**. "
-                "Run `python -m src.ingestion.overpass --destination \"Goa, India\"` first."
-            )
+        matched = match_venues(venues, preferences)
+
+    # ── 3. Geographic clustering ──────────────────────────────────────────────
+    with st.spinner("Grouping venues into days…"):
+        clusters = cluster_venues(matched, preferences["days"])
+
+    # ── 4. LLM itinerary assembly ─────────────────────────────────────────────
+    with st.spinner(
+        f"Generating your {preferences['days']}-day itinerary with Groq… "
+        "(one call per day)"
+    ):
+        try:
+            itinerary = build_itinerary(clusters, preferences)
+        except Exception as exc:
+            st.error(f"Itinerary generation failed: {exc}")
+            log.exception("build_itinerary failed")
             return
 
-        with st.spinner("Embedding venues and matching preferences…"):
-            embed_and_cache(destination)
-            venues = get_venues_by_destination(destination)
-            matched = match_venues(venues, preferences)
+    itinerary_id = insert_itinerary(
+        user_id=USER_ID,
+        destination=destination,
+        preferences=preferences,
+        days=preferences["days"],
+        output=itinerary,
+    )
+    log.info(f"Saved itinerary id={itinerary_id}")
 
-        with st.spinner("Clustering venues into day groups…"):
-            clusters = cluster_venues(matched, preferences["days"])
+    # ── 5. Display ────────────────────────────────────────────────────────────
+    st.success(f"Your {preferences['days']}-day itinerary for **{destination}** is ready!")
+    st.divider()
 
-        st.success(
-            f"Matched **{len(matched)}** venues → "
-            f"grouped into **{len(clusters)}** day clusters."
-        )
+    _render_itinerary(itinerary)
 
-        for i, cluster in enumerate(clusters):
-            with st.expander(f"Day {i + 1} — {len(cluster)} venues", expanded=False):
-                for v in cluster:
-                    st.write(
-                        f"**{v['name']}** — {', '.join(v['categories'])} "
-                        f"| score: {v.get('similarity_score', 0):.3f} "
-                        f"| ({v['lat']:.4f}, {v['lon']:.4f})"
-                    )
+    with st.expander("Preferences (debug)", expanded=False):
+        st.json(preferences)
 
-        with st.expander("Preference object (debug)", expanded=False):
-            st.json(preferences)
+    st.info("Coming next: interactive map, travel times, and feedback buttons.")
 
-        st.info("Next: LLM itinerary assembly → map display.")
+
+def _render_itinerary(itinerary: list[dict]) -> None:
+    day_tabs = st.tabs([f"Day {d['day_number']} — {d.get('theme', '')}" for d in itinerary])
+    for tab, day in zip(day_tabs, itinerary):
+        with tab:
+            for slot in day.get("slots", []):
+                col_time, col_body = st.columns([1, 5])
+                with col_time:
+                    st.markdown(f"### {slot.get('time', '')}")
+                    mins = slot.get("duration_minutes")
+                    if mins:
+                        st.caption(f"{mins} min")
+                with col_body:
+                    cats = slot.get("category", "")
+                    st.markdown(f"**{slot['venue_name']}** &nbsp; `{cats}`")
+                    st.write(slot.get("description", ""))
+                    note = slot.get("travel_note")
+                    if note:
+                        st.caption(f"🚶 {note}")
+                st.divider()
 
 
 if __name__ == "__main__":
