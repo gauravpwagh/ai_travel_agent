@@ -9,6 +9,7 @@ from src.db import get_venues_by_destination, init_db, insert_itinerary
 from src.generation.itinerary import USER_ID, build_itinerary
 from src.matching.embeddings import embed_and_cache
 from src.matching.scoring import match_venues
+from src.routing.ors import annotate_itinerary_travel_times
 from src.ui.forms import render_preference_form, render_sample_buttons
 from src.ui.itinerary_view import render_itinerary
 
@@ -74,6 +75,11 @@ def main() -> None:
             log.exception("build_itinerary failed")
             return
 
+    # ── 5. Travel times ───────────────────────────────────────────────────────
+    venue_lookup = {v["osm_id"]: v for c in clusters for v in c}
+    with st.spinner("Estimating travel times between venues…"):
+        annotate_itinerary_travel_times(itinerary, venue_lookup)
+
     itinerary_id = insert_itinerary(
         user_id=USER_ID,
         destination=destination,
@@ -83,7 +89,7 @@ def main() -> None:
     )
     log.info(f"Saved itinerary id={itinerary_id}")
 
-    # ── 5. Display ────────────────────────────────────────────────────────────
+    # ── 6. Display ────────────────────────────────────────────────────────────
     st.success(f"Your {preferences['days']}-day itinerary for **{destination}** is ready!")
     st.divider()
 
