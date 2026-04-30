@@ -139,6 +139,32 @@ def get_venues_by_destination(destination: str) -> list[dict[str, Any]]:
     return [_row_to_venue(r) for r in rows]
 
 
+def insert_itinerary(
+    user_id: str,
+    destination: str,
+    preferences: dict[str, Any],
+    days: int,
+    output: list[dict[str, Any]],
+) -> int:
+    """Persist a generated itinerary. Returns the new row id."""
+    with connect() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO itineraries (user_id, destination, preferences, days, output, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                destination,
+                json.dumps(preferences),
+                days,
+                json.dumps(output),
+                datetime.utcnow().isoformat(),
+            ),
+        )
+        return cursor.lastrowid
+
+
 def update_venue_embedding(venue_id: int, embedding_bytes: bytes) -> None:
     """Write a cached embedding BLOB for a venue row."""
     with connect() as conn:
