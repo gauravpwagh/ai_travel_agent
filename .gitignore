@@ -18,6 +18,7 @@ data/travel.db
 data/cache/
 data/logs/
 eval/results/
+!eval/results/SUMMARY.md
 
 # IDE
 .vscode/

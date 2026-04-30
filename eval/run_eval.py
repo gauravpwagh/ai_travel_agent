@@ -321,6 +321,239 @@ def run_coherence_eval(destination: str) -> dict:
     return result
 
 
+# ── Phase 2.8 — Locked metrics summary ───────────────────────────────────────
+
+_TARGETS = {
+    # Phase 2.5
+    "extraction_scalar_accuracy": {"target": 0.90, "label": "Scalar accuracy",       "fmt": ".0%"},
+    "extraction_interests_f1":    {"target": 0.85, "label": "Interests mean F1",      "fmt": ".3f"},
+    # Phase 2.6
+    "rubric_feasibility":         {"target": 4.0,  "label": "Feasibility mean",       "fmt": ".2f"},
+    "rubric_preference_match":    {"target": 4.0,  "label": "Preference match mean",  "fmt": ".2f"},
+    "rubric_diversity":           {"target": 3.5,  "label": "Diversity mean",         "fmt": ".2f"},
+    "rubric_groundedness":        {"target": 4.5,  "label": "Groundedness mean",      "fmt": ".2f"},
+    "rubric_overall":             {"target": 4.0,  "label": "Overall mean",           "fmt": ".2f"},
+    # Phase 2.7
+    "coherence_median_min":       {"target": 20.0, "label": "Median intra-day transit","fmt": ".1f",
+                                   "pass_when": "lt"},   # pass when value < target
+}
+
+
+def _check(key: str, value: float) -> bool:
+    t   = _TARGETS[key]
+    tgt = t["target"]
+    if t.get("pass_when") == "lt":
+        return value < tgt
+    return value >= tgt
+
+
+def _fmt_value(key: str, value: float | None) -> str:
+    if value is None:
+        return "—"
+    spec = _TARGETS[key]["fmt"]
+    return format(value, spec)
+
+
+def write_summary(
+    extraction: dict | None = None,
+    rubric: dict | None     = None,
+    coherence: dict | None  = None,
+) -> None:
+    """Write (or overwrite) eval/results/SUMMARY.md with locked metric values.
+
+    Any result block that is *None* will be loaded from the corresponding
+    saved JSON file if it exists, otherwise that section shows '—'.
+    """
+    import datetime
+
+    def _try_load(filename: str) -> dict | None:
+        p = RESULTS_DIR / filename
+        if p.exists():
+            with open(p, encoding="utf-8") as f:
+                return json.load(f)
+        return None
+
+    if extraction is None:
+        extraction = _try_load("extraction_results.json")
+    if rubric is None:
+        rubric = _try_load("rubric_results.json")
+    if coherence is None:
+        # Try any coherence file
+        files = list(RESULTS_DIR.glob("coherence_results_*.json"))
+        if files:
+            with open(files[-1], encoding="utf-8") as f:
+                coherence = json.load(f)
+
+    # ── gather values ─────────────────────────────────────────────────────────
+    ext_acc  = extraction["overall_scalar_accuracy"] if extraction else None
+    ext_f1   = extraction["interests_mean_f1"]       if extraction else None
+
+    rub_feas = rubric["dimension_means"]["feasibility"]       if rubric else None
+    rub_pref = rubric["dimension_means"]["preference_match"]  if rubric else None
+    rub_div  = rubric["dimension_means"]["diversity"]         if rubric else None
+    rub_gnd  = rubric["dimension_means"]["groundedness"]      if rubric else None
+    rub_over = rubric["grand_mean"]                           if rubric else None
+    rub_verd = rubric["verdict"]                              if rubric else "—"
+
+    coh_med  = coherence["median_intraday_avg_min"] if coherence else None
+    coh_mean = coherence["mean_intraday_avg_min"]   if coherence else None
+    coh_dest = coherence["destination"]             if coherence else "—"
+    coh_n    = coherence["n_day_groups"]            if coherence else "—"
+
+    def _row(key: str, value: float | None, unit: str = "") -> str:
+        label  = _TARGETS[key]["label"]
+        target = _TARGETS[key]["target"]
+        tspec  = _TARGETS[key]["fmt"]
+        tgt_s  = format(target, tspec)
+        pass_w = _TARGETS[key].get("pass_when", "gte")
+        tgt_label = f"< {tgt_s}" if pass_w == "lt" else f"≥ {tgt_s}"
+        val_s  = _fmt_value(key, value) + (f" {unit}" if unit and value is not None else "")
+        if value is None:
+            flag = "⏳ pending"
+        else:
+            flag = "✅ PASS" if _check(key, value) else "❌ FAIL"
+        return f"| {label:<30} | {tgt_label:<12} | {val_s:<14} | {flag} |"
+
+    # ── overall go/no-go ──────────────────────────────────────────────────────
+    all_values = {
+        "extraction_scalar_accuracy": ext_acc,
+        "extraction_interests_f1":    ext_f1,
+        "rubric_feasibility":         rub_feas,
+        "rubric_preference_match":    rub_pref,
+        "rubric_diversity":           rub_div,
+        "rubric_groundedness":        rub_gnd,
+        "rubric_overall":             rub_over,
+        "coherence_median_min":       coh_med,
+    }
+    pending = [k for k, v in all_values.items() if v is None]
+    failing = [k for k, v in all_values.items() if v is not None and not _check(k, v)]
+
+    if pending:
+        overall_verdict = f"⏳ PENDING  ({len(pending)} metric(s) not yet measured)"
+        verdict_detail  = "Run the missing eval tasks to finalize the verdict."
+    elif failing:
+        overall_verdict = "❌ NO-GO"
+        verdict_detail  = f"Failing: {', '.join(_TARGETS[k]['label'] for k in failing)}"
+    else:
+        overall_verdict = "✅ GO"
+        verdict_detail  = "All metrics meet their targets."
+
+    # ── extraction breakdown ──────────────────────────────────────────────────
+    ext_field_rows = ""
+    if extraction:
+        for field, acc in extraction["field_accuracy"].items():
+            if acc is None:
+                continue
+            mark = "✅" if acc >= 0.90 else "❌"
+            ext_field_rows += f"\n| `{field}`{' '*(14-len(field))} | {acc:.0%}  | {mark} |"
+
+    # ── rubric per-itinerary ──────────────────────────────────────────────────
+    rub_rows = ""
+    if rubric:
+        for it in rubric["itineraries"]:
+            s = it["scores"] if "scores" in it else {}
+            ov = it.get("computed_overall") or it.get("overall", "—")
+            rub_rows += (
+                f"\n| {it['id']} | {it['label'][:38]:<38} |"
+                f" {s.get('feasibility','—')} | {s.get('preference_match','—')} |"
+                f" {s.get('diversity','—')} | {s.get('groundedness','—')} |"
+                f" {ov} |"
+            )
+
+    # ── coherence per-itinerary ───────────────────────────────────────────────
+    coh_rows = ""
+    if coherence:
+        for it in coherence.get("itineraries", []):
+            avg = it.get("itinerary_avg_min") or "—"
+            day_avgs = ", ".join(str(x) for x in it.get("day_averages_min", []))
+            coh_rows += f"\n| {it['id']} | {it['label'][:38]:<38} | {avg!s:<8} | {day_avgs} |"
+
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    md = f"""\
+# Evaluation Metrics — Locked Summary
+**Project:** AI Personal Travel Itinerary Generator
+**Generated:** {now}
+**Phases covered:** 2.5 Extraction · 2.6 Itinerary Quality · 2.7 Geographic Coherence
+
+---
+
+## Overall Go / No-Go
+
+> **{overall_verdict}**
+> {verdict_detail}
+
+---
+
+## Phase 2.5 — Preference Extraction Accuracy
+
+| Metric                         | Target       | Actual         | Status |
+|:-------------------------------|:-------------|:---------------|:-------|
+{_row("extraction_scalar_accuracy", ext_acc)}
+{_row("extraction_interests_f1",    ext_f1)}
+
+**Run:** `python -m eval.run_eval --task extraction`
+**Test set:** 28 hand-labeled cases — groups: explicit (E01-E08), partial (P09-P16), inferred (I17-I22), edge (X23-X28)
+{"" if not ext_field_rows else chr(10) + "### Per-field accuracy" + chr(10) + chr(10) + "| Field          | Accuracy | Pass |" + chr(10) + "|:---------------|:---------|:-----|" + ext_field_rows}
+
+---
+
+## Phase 2.6 — Itinerary Quality Rubric
+
+| Metric                         | Target       | Actual         | Status |
+|:-------------------------------|:-------------|:---------------|:-------|
+{_row("rubric_feasibility",    rub_feas)}
+{_row("rubric_preference_match", rub_pref)}
+{_row("rubric_diversity",     rub_div)}
+{_row("rubric_groundedness",  rub_gnd)}
+{_row("rubric_overall",       rub_over)}
+
+**Verdict:** {rub_verd}
+**Corpus:** 10 itineraries, destination Goa, India, evaluated 2026-05-01
+**Rubric:** see `eval/itinerary_rubric.md`
+{"" if not rub_rows else chr(10) + "### Per-itinerary scores" + chr(10) + chr(10) + "| ID   | Label                                  | Feas | Pref | Div | Gnd | Overall |" + chr(10) + "|:-----|:---------------------------------------|-----:|-----:|----:|----:|--------:|" + rub_rows}
+
+---
+
+## Phase 2.7 — Geographic Coherence
+
+| Metric                         | Target       | Actual         | Status |
+|:-------------------------------|:-------------|:---------------|:-------|
+{_row("coherence_median_min", coh_med, "min")}
+
+**Destination:** {coh_dest}
+**Day-groups measured:** {coh_n}
+**Mean intra-day avg transit:** {"—" if coh_mean is None else f"{coh_mean:.1f} min"}
+**Run:** `python -m eval.run_eval --task coherence --destination "Manhattan, New York"`
+{"" if not coh_rows else chr(10) + "### Per-itinerary transit" + chr(10) + chr(10) + "| ID   | Label                                  | Avg (min) | Per-day averages (min)  |" + chr(10) + "|:-----|:---------------------------------------|----------:|:------------------------|" + coh_rows}
+
+---
+
+## Metric Targets Reference
+
+| Source | Metric | Target |
+|:-------|:-------|:-------|
+| CLAUDE.md | Preference extraction accuracy | ≥ 90% |
+| CLAUDE.md | Geographic coherence | < 20 min avg intra-day |
+| CLAUDE.md | Groundedness | 100% (rubric proxy ≥ 4.5) |
+| CLAUDE.md | Constraint satisfaction | ≥ 95% |
+| Rubric    | Feasibility mean | ≥ 4.0 |
+| Rubric    | Preference match mean | ≥ 4.0 |
+| Rubric    | Diversity mean | ≥ 3.5 |
+| Rubric    | Groundedness mean | ≥ 4.5 |
+| Rubric    | Overall mean | ≥ 4.0 |
+
+---
+
+*Auto-generated by `eval/run_eval.py → write_summary()`.
+Re-run `python -m eval.run_eval` to refresh with latest results.*
+"""
+
+    out = RESULTS_DIR / "SUMMARY.md"
+    RESULTS_DIR.mkdir(exist_ok=True)
+    out.write_text(md, encoding="utf-8")
+    print(f"  → saved {out.relative_to(ROOT)}")
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -337,16 +570,22 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    extraction = rubric = coherence = None
+
     if args.task in ("extraction", "all"):
-        run_extraction_eval()
+        extraction = run_extraction_eval()
 
     if args.task in ("rubric", "all"):
-        run_rubric_eval()
+        rubric = run_rubric_eval()
 
     if args.task in ("coherence", "all"):
-        run_coherence_eval(args.destination)
+        coherence = run_coherence_eval(args.destination)
 
     print("\nDone. Results saved to eval/results/")
+
+    # Phase 2.8 — always regenerate the locked summary
+    print("\nWriting metrics summary …")
+    write_summary(extraction=extraction, rubric=rubric, coherence=coherence)
 
 
 if __name__ == "__main__":
