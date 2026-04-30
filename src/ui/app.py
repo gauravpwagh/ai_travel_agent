@@ -12,6 +12,7 @@ from src.matching.scoring import match_venues
 from src.routing.ors import annotate_itinerary_travel_times
 from src.ui.forms import render_preference_form, render_sample_buttons
 from src.ui.itinerary_view import render_itinerary
+from src.validation.checks import validate_and_fix_itinerary
 
 log = setup_logging()
 
@@ -80,6 +81,12 @@ def main() -> None:
     with st.spinner("Estimating travel times between venues…"):
         annotate_itinerary_travel_times(itinerary, venue_lookup)
 
+    # ── 6. Validation + auto-fix ──────────────────────────────────────────────
+    with st.spinner("Validating itinerary…"):
+        itinerary, issues = validate_and_fix_itinerary(
+            itinerary, clusters, venue_lookup, preferences
+        )
+
     itinerary_id = insert_itinerary(
         user_id=USER_ID,
         destination=destination,
@@ -89,11 +96,11 @@ def main() -> None:
     )
     log.info(f"Saved itinerary id={itinerary_id}")
 
-    # ── 6. Display ────────────────────────────────────────────────────────────
+    # ── 7. Display ────────────────────────────────────────────────────────────
     st.success(f"Your {preferences['days']}-day itinerary for **{destination}** is ready!")
     st.divider()
 
-    render_itinerary(itinerary, clusters)
+    render_itinerary(itinerary, clusters, issues)
 
     with st.expander("Preferences (debug)", expanded=False):
         st.json(preferences)

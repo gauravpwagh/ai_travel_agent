@@ -13,6 +13,7 @@ import streamlit as st
 
 from src.routing.ors import day_total_transit_minutes
 from src.ui.map_view import render_day_map
+from src.validation.checks import ValidationIssue
 
 # Category → emoji badge shown on venue cards
 _CATEGORY_EMOJI: dict[str, str] = {
@@ -33,9 +34,14 @@ _DEFAULT_EMOJI = "📍"
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def render_itinerary(itinerary: list[dict], clusters: list[list[dict]]) -> None:
+def render_itinerary(
+    itinerary:    list[dict],
+    clusters:     list[list[dict]],
+    issues:       list[ValidationIssue] | None = None,
+) -> None:
     """Render all days as Streamlit tabs, each with a map and venue cards."""
     venue_lookup = _build_venue_lookup(clusters)
+    issues = issues or []
 
     tab_labels = [
         f"Day {d['day_number']} · {d.get('theme', '')}" for d in itinerary
@@ -43,26 +49,29 @@ def render_itinerary(itinerary: list[dict], clusters: list[list[dict]]) -> None:
     tabs = st.tabs(tab_labels)
 
     for tab, day in zip(tabs, itinerary):
+        day_issues = [iss for iss in issues if iss.day_number == day["day_number"]]
         with tab:
-            _render_day(day, venue_lookup)
+            _render_day(day, venue_lookup, day_issues)
 
 
 # ── Per-day layout ────────────────────────────────────────────────────────────
 
-def _render_day(day: dict, venue_lookup: dict[str, dict]) -> None:
+def _render_day(
+    day:         dict,
+    venue_lookup: dict[str, dict],
+    issues:      list[ValidationIssue],
+) -> None:
     slots = day.get("slots", [])
     if not slots:
         st.warning("No venues for this day.")
         return
 
-    # Transit warning banner
+    # Validation issue banners (top of tab)
+    _render_issue_banners(issues)
+
+    # Transit summary (driven by travel-time data, not validation)
     total_min = day_total_transit_minutes(day)
-    if total_min >= 90:
-        st.warning(
-            f"⚠️ **High transit day** — estimated {total_min} min of travel between venues. "
-            "Consider dropping one stop or reordering."
-        )
-    elif total_min > 0:
+    if total_min > 0:
         st.caption(f"🚶 ~{total_min} min total transit for this day")
 
     map_col, list_col = st.columns([3, 2], gap="large")
@@ -72,6 +81,29 @@ def _render_day(day: dict, venue_lookup: dict[str, dict]) -> None:
 
     with list_col:
         _render_venue_cards(slots)
+
+
+# ── Validation issue banners ──────────────────────────────────────────────────
+
+_CHECK_ICON: dict[str, str] = {
+    "hallucination": "🔍",
+    "opening_hours": "🕐",
+    "transit":       "🚶",
+    "rating":        "⭐",
+}
+
+def _render_issue_banners(issues: list[ValidationIssue]) -> None:
+    if not issues:
+        return
+    with st.expander(f"🛡️ {len(issues)} validation notice(s)", expanded=False):
+        for iss in issues:
+            icon = _CHECK_ICON.get(iss.check, "ℹ️")
+            if iss.auto_fixed:
+                st.success(f"{icon} **Auto-fixed** ({iss.check}): {iss.message}")
+            elif iss.severity == "error":
+                st.error(f"{icon} **{iss.check}**: {iss.message}")
+            else:
+                st.warning(f"{icon} {iss.message}")
 
 
 # ── Venue card list ───────────────────────────────────────────────────────────
