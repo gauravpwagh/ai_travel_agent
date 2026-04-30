@@ -178,6 +178,33 @@ def insert_itinerary(
         return cursor.lastrowid
 
 
+def insert_feedback(
+    itinerary_id: int,
+    venue_id: int | None,
+    day_number: int,
+    action: str,                    # 'thumbs_up' | 'thumbs_down' | 'swap'
+) -> int:
+    """Log a feedback event. Returns the new row id."""
+    with connect() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO feedback (itinerary_id, venue_id, day_number, action, created_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (itinerary_id, venue_id, day_number, action, datetime.utcnow().isoformat()),
+        )
+        return cursor.lastrowid
+
+
+def get_venue_id(osm_id: str) -> int | None:
+    """Resolve an OSM id string to the venues table integer PK, or None."""
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT id FROM venues WHERE osm_id = ?", (osm_id,)
+        ).fetchone()
+    return row["id"] if row else None
+
+
 def get_travel_time(
     origin_osm_id: str, dest_osm_id: str, profile: str
 ) -> dict[str, Any] | None:
