@@ -10,6 +10,7 @@ from src.generation.itinerary import USER_ID, build_itinerary
 from src.matching.embeddings import embed_and_cache
 from src.matching.scoring import match_venues
 from src.ui.forms import render_preference_form, render_sample_buttons
+from src.ui.itinerary_view import render_itinerary
 
 log = setup_logging()
 
@@ -86,33 +87,10 @@ def main() -> None:
     st.success(f"Your {preferences['days']}-day itinerary for **{destination}** is ready!")
     st.divider()
 
-    _render_itinerary(itinerary)
+    render_itinerary(itinerary, clusters)
 
     with st.expander("Preferences (debug)", expanded=False):
         st.json(preferences)
-
-    st.info("Coming next: interactive map, travel times, and feedback buttons.")
-
-
-def _render_itinerary(itinerary: list[dict]) -> None:
-    day_tabs = st.tabs([f"Day {d['day_number']} — {d.get('theme', '')}" for d in itinerary])
-    for tab, day in zip(day_tabs, itinerary):
-        with tab:
-            for slot in day.get("slots", []):
-                col_time, col_body = st.columns([1, 5])
-                with col_time:
-                    st.markdown(f"### {slot.get('time', '')}")
-                    mins = slot.get("duration_minutes")
-                    if mins:
-                        st.caption(f"{mins} min")
-                with col_body:
-                    cats = slot.get("category", "")
-                    st.markdown(f"**{slot['venue_name']}** &nbsp; `{cats}`")
-                    st.write(slot.get("description", ""))
-                    note = slot.get("travel_note")
-                    if note:
-                        st.caption(f"🚶 {note}")
-                st.divider()
 
 
 if __name__ == "__main__":
