@@ -65,7 +65,9 @@
 **Destination:** —
 **Day-groups measured:** —
 **Mean intra-day avg transit:** —
-**Run:** `python -m eval.run_eval --task coherence --destination "Manhattan, New York"`
+**Configs available:** 10 × Goa, India (G01-G10) · 10 × Manhattan, New York (C01-C10)
+**Run (Goa):** `python -m eval.run_eval --task coherence --destination "Goa, India"`
+**Run (Manhattan):** `python -m eval.run_eval --task coherence --destination "Manhattan, New York"`
 
 
 ---
