@@ -138,8 +138,8 @@ def render_preference_form() -> dict | None:
             label="free_text",
             label_visibility="collapsed",
             placeholder=(
-                "e.g. "I want a relaxed beach holiday with great seafood. "
-                "We're a couple on a mid-range budget — no rushing around.""
+                "e.g. 'I want a relaxed beach holiday with great seafood. "
+                "We\'re a couple on a mid-range budget — no rushing around.'"
             ),
             height=90,
             key="free_text_input",
