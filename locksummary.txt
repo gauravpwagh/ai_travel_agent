@@ -1,0 +1,10 @@
+# 1. Lock Phase 2.5 (28 LLM calls, ~30s)
+python -m eval.run_eval --task extraction
+
+# 2. Lock Phase 2.7 (needs pre-cached Manhattan venues)
+python -m src.ingestion.overpass --destination "Manhattan, New York" --radius 8000
+python -m eval.run_eval --task coherence --destination "Manhattan, New York"
+
+# 3. Regenerate with all three locked
+python -m eval.run_eval --task rubric   # (rubric is offline/instant)
+# …then git add -f eval/results/SUMMARY.md && git commit

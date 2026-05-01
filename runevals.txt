@@ -1,0 +1,12 @@
+# Extraction accuracy (needs Groq key + 28 LLM calls)
+python -m eval.run_eval --task extraction
+
+# Rubric stats (offline, instant)
+python -m eval.run_eval --task rubric
+
+# Geographic coherence (needs cached Manhattan venues + ORS key)
+python -m src.ingestion.overpass --destination "Manhattan, New York" --radius 8000
+python -m eval.run_eval --task coherence --destination "Manhattan, New York"
+
+# All three in sequence
+python -m eval.run_eval

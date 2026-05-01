@@ -1,14 +1,14 @@
 # Evaluation Metrics — Locked Summary
 **Project:** AI Personal Travel Itinerary Generator
-**Generated:** 2026-05-01 00:43
+**Generated:** 2026-05-01 21:24
 **Phases covered:** 2.5 Extraction · 2.6 Itinerary Quality · 2.7 Geographic Coherence
 
 ---
 
 ## Overall Go / No-Go
 
-> **⏳ PENDING  (3 metric(s) not yet measured)**
-> Run the missing eval tasks to finalize the verdict.
+> **❌ NO-GO**
+> Failing: Median intra-day transit
 
 ---
 
@@ -16,12 +16,20 @@
 
 | Metric                         | Target       | Actual         | Status |
 |:-------------------------------|:-------------|:---------------|:-------|
-| Scalar accuracy                | ≥ 90%        | —              | ⏳ pending |
-| Interests mean F1              | ≥ 0.850      | —              | ⏳ pending |
+| Scalar accuracy                | ≥ 90%        | 97%            | ✅ PASS |
+| Interests mean F1              | ≥ 0.850      | 0.969          | ✅ PASS |
 
 **Run:** `python -m eval.run_eval --task extraction`
 **Test set:** 28 hand-labeled cases — groups: explicit (E01-E08), partial (P09-P16), inferred (I17-I22), edge (X23-X28)
 
+### Per-field accuracy
+
+| Field          | Accuracy | Pass |
+|:---------------|:---------|:-----|
+| `days`           | 100%  | ✅ |
+| `party_size`     | 88%  | ❌ |
+| `budget_tier`    | 100%  | ✅ |
+| `pace`           | 100%  | ✅ |
 
 ---
 
@@ -60,15 +68,27 @@
 
 | Metric                         | Target       | Actual         | Status |
 |:-------------------------------|:-------------|:---------------|:-------|
-| Median intra-day transit       | < 20.0       | —              | ⏳ pending |
+| Median intra-day transit       | < 20.0       | 96.1 min       | ❌ FAIL |
 
-**Destination:** —
-**Day-groups measured:** —
-**Mean intra-day avg transit:** —
-**Configs available:** 10 × Goa, India (G01-G10) · 10 × Manhattan, New York (C01-C10)
-**Run (Goa):** `python -m eval.run_eval --task coherence --destination "Goa, India"`
-**Run (Manhattan):** `python -m eval.run_eval --task coherence --destination "Manhattan, New York"`
+**Destination:** Goa, India
+**Day-groups measured:** 34
+**Mean intra-day avg transit:** 96.6 min
+**Run:** `python -m eval.run_eval --task coherence --destination "Manhattan, New York"`
 
+### Per-itinerary transit
+
+| ID   | Label                                  | Avg (min) | Per-day averages (min)  |
+|:-----|:---------------------------------------|----------:|:------------------------|
+| G01 | Beach & Seafood weekend                | 163.9    | 128.5, 199.2 |
+| G02 | Heritage & Church trail                | 123.7    | 24.8, 180.8, 165.5 |
+| G03 | Luxury beach resort escape             | 96.9     | 23.0, 154.2, 113.5 |
+| G04 | Backpacker full week                   | 69.0     | 23.2, 63.5, 38.0, 141.7, 78.7 |
+| G05 | Family beach vacation                  | 73.1     | 22.3, 41.0, 101.8, 127.4 |
+| G06 | Nightlife & beach party                | 92.5     | 89.4, 95.5 |
+| G07 | Nature & spice trails                  | 105.6    | 20.0, 100.0, 132.3, 170.2 |
+| G08 | Luxury romance — art & dining          | 98.9     | 88.2, 76.5, 132.0 |
+| G09 | Solo culture deep-dive                 | 88.5     | 53.0, 134.2, 69.8, 90.8, 94.8 |
+| G10 | Budget all-interests sampler           | 103.6    | 96.8, 109.2, 104.8 |
 
 ---
 
