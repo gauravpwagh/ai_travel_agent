@@ -58,9 +58,14 @@ def annotate_itinerary_travel_times(
 
 
 def day_total_transit_minutes(day: dict) -> int:
-    """Sum the travel legs for one day. Returns 0 if no travel data."""
+    """Sum the travel legs for one day. Returns 0 if no travel data.
+
+    Uses ``or {}`` rather than a default argument so that an explicit
+    ``travel_to_next: null`` (last slot / missing coords) is treated
+    the same as an absent key — both coerce to an empty dict.
+    """
     total_s = sum(
-        slot.get("travel_to_next", {}).get("duration_s", 0) or 0
+        (slot.get("travel_to_next") or {}).get("duration_s", 0) or 0
         for slot in day.get("slots", [])
     )
     return total_s // 60
