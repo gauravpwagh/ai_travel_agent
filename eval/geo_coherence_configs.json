@@ -1,13 +1,152 @@
 {
   "_meta": {
-    "description": "Phase 2.7 — 10 preference configurations for geographic coherence evaluation on Manhattan, New York.",
-    "destination": "Manhattan, New York",
+    "description": "Phase 2.7 — 10 preference configurations per destination for geographic coherence evaluation. Destinations: 'Goa, India' (G01-G10) and 'Manhattan, New York' (C01-C10).",
+    "destinations": ["Goa, India", "Manhattan, New York"],
     "target_metric": "median intra-day travel time < 20 min average between consecutive venues",
-    "how_to_run": "python -m eval.run_eval --task coherence --destination 'Manhattan, New York'",
-    "prerequisite": "python -m src.ingestion.overpass --destination 'Manhattan, New York' --radius 8000",
-    "note": "Manhattan is denser than Goa; expect 8-15 min walking legs vs 15-25 min in Goa. Coherence target should be easier to meet."
+    "how_to_run": {
+      "goa":      "python -m eval.run_eval --task coherence --destination 'Goa, India'",
+      "manhattan": "python -m eval.run_eval --task coherence --destination 'Manhattan, New York'"
+    },
+    "prerequisites": {
+      "goa":      "python -m src.ingestion.overpass --destination 'Goa, India' --radius 8000",
+      "manhattan": "python -m src.ingestion.overpass --destination 'Manhattan, New York' --radius 8000"
+    },
+    "notes": {
+      "goa":      "Goa is spread out (beach clusters 5-15 km apart); expect 15-25 min legs. North Goa venues cluster tighter than South Goa.",
+      "manhattan": "Manhattan is dense; expect 8-15 min walking legs. Coherence target should be easier to meet than Goa."
+    }
   },
   "configs": [
+
+    {
+      "id": "G01",
+      "label": "Beach & Seafood weekend",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 2,
+        "party_size": 2,
+        "budget_tier": "mid-range",
+        "interests": ["beaches", "food"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "G02",
+      "label": "Heritage & Church trail",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["history", "art"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "G03",
+      "label": "Luxury beach resort escape",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": 2,
+        "budget_tier": "luxury",
+        "interests": ["beaches", "food", "art"],
+        "pace": "relaxed"
+      }
+    },
+
+    {
+      "id": "G04",
+      "label": "Backpacker full week",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 5,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["beaches", "food", "nightlife"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "G05",
+      "label": "Family beach vacation",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 4,
+        "party_size": 4,
+        "budget_tier": "mid-range",
+        "interests": ["beaches", "nature", "food"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "G06",
+      "label": "Nightlife & beach party",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 2,
+        "party_size": 4,
+        "budget_tier": "mid-range",
+        "interests": ["nightlife", "beaches", "food"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "G07",
+      "label": "Nature & spice trails",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 4,
+        "party_size": 2,
+        "budget_tier": "mid-range",
+        "interests": ["nature", "history", "food"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "G08",
+      "label": "Luxury romance — art & dining",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": 2,
+        "budget_tier": "luxury",
+        "interests": ["art", "food", "nightlife"],
+        "pace": "moderate"
+      }
+    },
+
+    {
+      "id": "G09",
+      "label": "Solo culture deep-dive",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 5,
+        "party_size": 1,
+        "budget_tier": "budget",
+        "interests": ["history", "art", "nature"],
+        "pace": "packed"
+      }
+    },
+
+    {
+      "id": "G10",
+      "label": "Budget all-interests sampler",
+      "preferences": {
+        "destination": "Goa, India",
+        "days": 3,
+        "party_size": 2,
+        "budget_tier": "budget",
+        "interests": ["food", "beaches", "history", "nature"],
+        "pace": "moderate"
+      }
+    },
 
     {
       "id": "C01",
