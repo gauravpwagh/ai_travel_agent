@@ -56,53 +56,6 @@ hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
 ::-webkit-scrollbar-thumb { background: #BAE6FD; border-radius: 3px; }
 
 /* ══════════════════════════════════════════════════════
-   PAGE 1 — WELCOME HERO
-══════════════════════════════════════════════════════ */
-.wlc-hero {
-    text-align: center;
-    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 60%, #0284C7 100%);
-    border-radius: 24px;
-    padding: 4rem 2rem 3.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 8px 32px rgba(14,165,233,.22);
-}
-.wlc-hero h1 {
-    color: white !important;
-    font-size: 3rem !important;
-    margin: .4rem 0 .9rem;
-    letter-spacing: -.5px;
-}
-.wlc-hero p {
-    color: rgba(255,255,255,.9);
-    font-size: 1.1rem;
-    max-width: 540px;
-    margin: 0 auto;
-    line-height: 1.65;
-}
-.wlc-emoji { font-size: 3.5rem; line-height: 1; }
-
-/* ══════════════════════════════════════════════════════
-   PAGE 1 — FEATURE CARDS
-══════════════════════════════════════════════════════ */
-.feat-card {
-    background: white;
-    border: 1px solid #E0F2FE;
-    border-radius: 18px;
-    padding: 1.6rem 1.25rem 1.4rem;
-    text-align: center;
-    box-shadow: 0 2px 10px rgba(14,165,233,.07);
-    height: 100%;
-    transition: box-shadow .2s, border-color .2s;
-}
-.feat-card:hover {
-    box-shadow: 0 6px 20px rgba(14,165,233,.15);
-    border-color: #7DD3FC;
-}
-.feat-icon  { font-size: 2.2rem; margin-bottom: .6rem; }
-.feat-title { font-weight: 700; font-size: 1rem; color: #0F172A; margin-bottom: .4rem; }
-.feat-desc  { font-size: .85rem; color: #64748B; line-height: 1.55; }
-
-/* ══════════════════════════════════════════════════════
    PAGE 2 — FORM TOP-NAV
 ══════════════════════════════════════════════════════ */
 .form-topnav {
@@ -315,48 +268,31 @@ def _scroll_to_top() -> None:
 
 
 def _go(page: str) -> None:
-    """Navigate to a page and immediately rerun."""
+    """Navigate to a page, scroll to top, and rerun."""
     st.session_state[_PAGE] = page
+    st.session_state["_scroll_top"] = True
     st.rerun()
 
 
 # ── Pages ─────────────────────────────────────────────────────────────────────
 
 def _page_welcome() -> None:
-    # ── Hero ──────────────────────────────────────────────────────────────────
-    st.markdown(
-        """<div class="wlc-hero">
-            <div class="wlc-emoji">✈️</div>
-            <h1>Hi! Let's plan your trip.</h1>
-            <p>Answer a few quick questions and we'll build a personalised
-               day-by-day itinerary with real venues, maps, and travel
-               times — in under 2 minutes.</p>
-        </div>""",
-        unsafe_allow_html=True,
-    )
+    st.markdown("<div style='height:6rem'></div>", unsafe_allow_html=True)
 
-    # ── Feature cards ──────────────────────────────────────────────────────────
-    features = [
-        ("📍", "Real venues", "Every place is sourced from OpenStreetMap — zero hallucinations."),
-        ("🗺️", "Interactive maps", "Day-by-day maps with numbered stops and walking times."),
-        ("🎯", "Preference-matched", "AI ranks venues by how well they fit your travel style."),
-    ]
-    for col, (icon, title, desc) in zip(st.columns(3, gap="large"), features):
-        with col:
-            st.markdown(
-                f"""<div class="feat-card">
-                    <div class="feat-icon">{icon}</div>
-                    <div class="feat-title">{title}</div>
-                    <div class="feat-desc">{desc}</div>
-                </div>""",
-                unsafe_allow_html=True,
-            )
-
-    st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
-
-    # ── CTA button ─────────────────────────────────────────────────────────────
-    _, btn_col, _ = st.columns([2, 3, 2])
-    with btn_col:
+    _, mid, _ = st.columns([1, 4, 1])
+    with mid:
+        st.markdown(
+            """<div style="text-align:center;margin-bottom:2rem">
+                <div style="font-size:3.5rem;line-height:1;margin-bottom:1rem">✈️</div>
+                <h1 style="font-size:2.4rem!important;margin-bottom:.6rem">
+                    Hi! Ready to explore?
+                </h1>
+                <p style="color:#64748B;font-size:1.05rem;margin:0">
+                    Let's build your perfect day-by-day travel itinerary.
+                </p>
+            </div>""",
+            unsafe_allow_html=True,
+        )
         if st.button("Let's go  →", type="primary",
                      use_container_width=True, key="wlc_go"):
             _go("form")
@@ -387,10 +323,6 @@ def _page_itinerary() -> None:
     if not state:
         _go("welcome")
         return
-
-    # ── Scroll-to-top after venue swap ─────────────────────────────────────────
-    if st.session_state.pop("_scroll_top", False):
-        _scroll_to_top()
 
     dest = state["preferences"]["destination"]
     days = state["preferences"]["days"]
@@ -438,6 +370,10 @@ def main() -> None:
     )
     _inject_css()
     init_db()
+
+    # Scroll to top on every page transition (set by _go() and swap handler)
+    if st.session_state.pop("_scroll_top", False):
+        _scroll_to_top()
 
     page = st.session_state.get(_PAGE, "welcome")
     if page == "welcome":
