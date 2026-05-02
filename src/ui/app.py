@@ -34,152 +34,220 @@ log = setup_logging()
 
 _CSS = """
 <style>
-/* ── Base layout ── */
+/* ══════════════════════════════════════════════════════
+   BASE
+══════════════════════════════════════════════════════ */
 .stApp { background: #F1F5F9; }
-.block-container {
-    padding: 2rem 2.5rem 4rem;
-    max-width: 1280px;
-}
+.block-container { padding: 2rem 2.5rem 4rem; max-width: 1280px; }
 
-/* ── Typography ── */
 h1 { font-size: 2.2rem !important; font-weight: 800 !important;
-     color: #0F172A !important; letter-spacing: -0.5px; }
-h2 { font-size: 1.4rem !important; font-weight: 700 !important;
+     color: #0F172A !important; letter-spacing: -.5px; }
+h2 { font-size: 1.35rem !important; font-weight: 700 !important;
      color: #0F172A !important; }
-h3 { font-size: 1.1rem !important; font-weight: 600 !important;
+h3 { font-size: 1.05rem !important; font-weight: 600 !important;
      color: #1E293B !important; }
 p, li { color: #334155; }
+hr  { border-color: #E2E8F0 !important; margin: 1.25rem 0 !important; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
 
-/* ── Hero header ── */
+/* ══════════════════════════════════════════════════════
+   HERO HEADER
+══════════════════════════════════════════════════════ */
 .travel-hero {
-    background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 50%, #4F46E5 100%);
+    background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 55%, #4F46E5 100%);
     border-radius: 20px;
-    padding: 2.5rem 2.5rem 2rem;
-    margin-bottom: 1.5rem;
-    color: white;
+    padding: 2.25rem 2.5rem 2rem;
+    margin-bottom: 1.25rem;
 }
-.travel-hero h1 { color: white !important; font-size: 2.4rem !important; margin: 0; }
-.travel-hero p  { color: rgba(255,255,255,.85); font-size: 1.05rem; margin: .5rem 0 0; }
+.travel-hero h1 { color: white !important; font-size: 2.3rem !important; margin: 0; }
+.travel-hero p  { color: rgba(255,255,255,.85); font-size: 1rem; margin: .4rem 0 0; }
 
-/* ── Sample preset buttons ── */
-.preset-strip .stButton > button {
-    border-radius: 20px;
-    border: 1.5px solid #CBD5E1;
-    background: white;
-    color: #334155;
-    font-size: .85rem;
-    font-weight: 600;
-    padding: .35rem 1rem;
-    transition: all .15s ease;
-}
-.preset-strip .stButton > button:hover {
-    border-color: #0EA5E9;
-    color: #0EA5E9;
-    box-shadow: 0 2px 8px rgba(14,165,233,.15);
-    transform: translateY(-1px);
-}
-
-/* ── Form card ── */
-.stForm {
-    background: white !important;
-    border-radius: 16px !important;
-    padding: 1.75rem !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 20px rgba(0,0,0,.05) !important;
-    border: 1px solid #E2E8F0 !important;
-}
-
-/* ── Form submit button ── */
-.stFormSubmitButton > button {
-    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 12px !important;
-    font-size: 1rem !important;
-    font-weight: 700 !important;
-    padding: .75rem !important;
-    transition: all .2s ease !important;
-    letter-spacing: .3px;
-}
-.stFormSubmitButton > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(37,99,235,.4) !important;
-}
-
-/* ── Tabs ── */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 4px;
-    background: white;
-    border-radius: 12px;
-    padding: 4px;
+/* ══════════════════════════════════════════════════════
+   ONBOARDING — PROGRESS BAR
+══════════════════════════════════════════════════════ */
+.onb-progress {
+    display: flex; align-items: flex-start; justify-content: center;
+    gap: 0; padding: 1.25rem 1rem .9rem;
+    background: white; border-radius: 16px;
     border: 1px solid #E2E8F0;
-    box-shadow: 0 1px 3px rgba(0,0,0,.05);
-    margin-bottom: .5rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
-.stTabs [data-baseweb="tab"] {
-    border-radius: 8px;
-    padding: 8px 20px;
-    font-weight: 600;
-    font-size: .9rem;
-    color: #64748B;
-    border: none !important;
-    background: transparent;
-    transition: all .15s ease;
+.step-item  { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.step-conn  { width: 56px; height: 2px; background: #E2E8F0;
+              margin-top: 17px; flex-shrink: 0; }
+.step-dot {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+    border: 2px solid #E2E8F0; background: #F8FAFC; color: #94A3B8;
 }
-.stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
-    color: white !important;
+.step-dot.done   { background: #D1FAE5; border-color: #059669; color: #059669; }
+.step-dot.active {
+    background: linear-gradient(135deg, #0EA5E9, #2563EB);
+    border-color: transparent; color: white;
+    box-shadow: 0 3px 10px rgba(14,165,233,.4);
 }
-.stTabs [data-baseweb="tab-panel"] {
-    padding-top: .75rem;
+.step-lbl        { font-size: .71rem; font-weight: 500; color: #94A3B8;
+                   white-space: nowrap; }
+.step-lbl-active { color: #0EA5E9 !important; font-weight: 700 !important; }
+
+/* ══════════════════════════════════════════════════════
+   ONBOARDING — STEP CONTAINER (max width, centred)
+══════════════════════════════════════════════════════ */
+.onb-card {
+    background: white; border-radius: 18px;
+    border: 1px solid #E2E8F0;
+    padding: 2rem 2.25rem;
+    max-width: 680px; margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
 }
 
-/* ── Bordered containers (venue cards) ── */
+/* ══════════════════════════════════════════════════════
+   ONBOARDING — STEP HEADER
+══════════════════════════════════════════════════════ */
+.step-hdr {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;
+}
+.step-hdr-icon { font-size: 2.4rem; line-height: 1; }
+
+/* ══════════════════════════════════════════════════════
+   ONBOARDING — DESTINATION CARD
+══════════════════════════════════════════════════════ */
+.dest-card {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%);
+    border: 2px solid #0EA5E9; border-radius: 14px;
+}
+.dest-flag { font-size: 2rem; }
+.dest-name { font-weight: 700; font-size: 1rem; color: #0F172A; }
+.dest-tags { font-size: .8rem; color: #64748B; margin-top: 2px; }
+.dest-check {
+    margin-left: auto; background: #0EA5E9; color: white;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════
+   ONBOARDING — DAY PIPS
+══════════════════════════════════════════════════════ */
+.day-pips    { display: flex; gap: 8px; margin-top: .5rem; }
+.day-pip {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: #F1F5F9; border: 2px solid #E2E8F0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: .8rem; color: #94A3B8;
+}
+.day-pip-on {
+    background: linear-gradient(135deg, #0EA5E9, #2563EB);
+    border-color: transparent; color: white;
+    box-shadow: 0 3px 10px rgba(14,165,233,.4);
+}
+
+/* ══════════════════════════════════════════════════════
+   ONBOARDING — SUMMARY CARD (Review step)
+══════════════════════════════════════════════════════ */
+.sum-card {
+    background: #F8FAFC; border: 1px solid #E2E8F0;
+    border-radius: 14px; padding: .9rem 1.25rem;
+    display: flex; flex-direction: column; gap: .55rem;
+}
+.sum-row { display: flex; align-items: flex-start; gap: .75rem; }
+.sum-key { font-size: .82rem; color: #64748B; font-weight: 600; min-width: 120px; }
+.sum-val { font-size: .88rem; color: #0F172A; font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════
+   st.pills — larger, more app-like
+══════════════════════════════════════════════════════ */
+div[data-testid="stPills"] { gap: 8px !important; flex-wrap: wrap !important; }
+div[data-testid="stPills"] button {
+    border-radius: 22px !important; padding: .45rem 1.15rem !important;
+    font-size: .88rem !important; font-weight: 600 !important;
+    border: 2px solid #E2E8F0 !important;
+    background: white !important; color: #475569 !important;
+    transition: all .15s ease !important;
+}
+div[data-testid="stPills"] button[aria-selected="true"] {
+    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
+    border-color: transparent !important; color: white !important;
+    box-shadow: 0 3px 10px rgba(14,165,233,.35) !important;
+}
+div[data-testid="stPills"] button:hover:not([aria-selected="true"]) {
+    border-color: #94A3B8 !important; color: #1E293B !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   NAVIGATION BUTTONS (Back / Next)
+══════════════════════════════════════════════════════ */
+.stButton > button {
+    border-radius: 10px; font-weight: 600;
+    border: 1.5px solid #E2E8F0; transition: all .15s ease;
+}
+.stButton > button[kind="primary"],
+.stButton > button[data-testid="baseButton-primary"] {
+    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
+    border: none !important; color: white !important;
+    font-size: .95rem !important;
+}
+.stButton > button[kind="primary"]:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 5px 18px rgba(37,99,235,.38) !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   PRESET CARDS (bordered containers)
+══════════════════════════════════════════════════════ */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    border-radius: 14px !important;
-    border: 1px solid #E2E8F0 !important;
+    border-radius: 14px !important; border: 1px solid #E2E8F0 !important;
     background: white !important;
     box-shadow: 0 1px 4px rgba(0,0,0,.05) !important;
-    transition: box-shadow .2s ease;
+    transition: box-shadow .2s ease, border-color .2s ease;
     overflow: hidden;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,.09) !important;
 }
 
-/* ── Feedback buttons ── */
+/* ══════════════════════════════════════════════════════
+   ITINERARY TABS
+══════════════════════════════════════════════════════ */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px; background: white; border-radius: 12px;
+    padding: 4px; border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05); margin-bottom: .5rem;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px; padding: 8px 20px;
+    font-weight: 600; font-size: .88rem; color: #64748B;
+    border: none !important; background: transparent; transition: all .15s;
+}
+.stTabs [aria-selected="true"] {
+    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
+    color: white !important;
+}
+.stTabs [data-baseweb="tab-panel"] { padding-top: .75rem; }
+
+/* ══════════════════════════════════════════════════════
+   VENUE CARDS
+══════════════════════════════════════════════════════ */
 .feedback-row .stButton > button {
-    border-radius: 8px;
-    font-size: .8rem;
-    padding: .25rem .5rem;
-    font-weight: 600;
-    border: 1.5px solid #E2E8F0;
-    background: #F8FAFC;
-    color: #64748B;
-    transition: all .15s ease;
+    border-radius: 8px; font-size: .8rem; font-weight: 600;
+    border: 1.5px solid #E2E8F0; background: #F8FAFC; color: #64748B;
 }
 .feedback-row .stButton > button:hover { border-color: #94A3B8; background: white; }
-
-/* ── Transit / leg connector ── */
 .leg-connector {
     display: flex; align-items: center; gap: 8px;
-    margin: 2px 0 2px 4px;
-    color: #94A3B8; font-size: .8rem;
+    margin: 2px 0 2px 4px; color: #94A3B8; font-size: .8rem;
 }
 
-/* ── Success / info banners ── */
+/* ══════════════════════════════════════════════════════
+   MISC
+══════════════════════════════════════════════════════ */
 .stSuccess, .stInfo, .stWarning, .stError { border-radius: 10px !important; }
-
-/* ── Expander ── */
 .stExpander { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; }
 details[open] > summary { font-weight: 600; }
-
-/* ── Divider ── */
-hr { border-color: #E2E8F0 !important; margin: 1.5rem 0 !important; }
-
-/* ── Scrollbar polish ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
 </style>
 """
 
@@ -233,13 +301,19 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    with st.container():
-        st.markdown('<div class="preset-strip">', unsafe_allow_html=True)
-        render_sample_buttons()
-        st.markdown('</div>', unsafe_allow_html=True)
+    # ── Preset quick-start cards ──────────────────────────────────────────────
+    render_sample_buttons()
 
     st.divider()
-    preferences = render_preference_form()
+
+    # ── Multi-step onboarding form (centred card) ─────────────────────────────
+    # The onb-card CSS centres and constrains the form to 680 px max-width.
+    # We use a single-column layout here so the form card doesn't stretch.
+    _, form_col, _ = st.columns([1, 6, 1])
+    with form_col:
+        st.markdown('<div class="onb-card">', unsafe_allow_html=True)
+        preferences = render_preference_form()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # ── New form submission → clear cache, run pipeline ───────────────────────
     if preferences is not None:
