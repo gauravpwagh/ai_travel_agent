@@ -92,16 +92,6 @@ hr  { border-color: #E2E8F0 !important; margin: 1.25rem 0 !important; }
                    white-space: nowrap; }
 .step-lbl-active { color: #0EA5E9 !important; font-weight: 700 !important; }
 
-/* ══════════════════════════════════════════════════════
-   ONBOARDING — STEP CONTAINER (max width, centred)
-══════════════════════════════════════════════════════ */
-.onb-card {
-    background: white; border-radius: 18px;
-    border: 1px solid #E2E8F0;
-    padding: 2rem 2.25rem;
-    max-width: 680px; margin: 0 auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,.06), 0 8px 32px rgba(0,0,0,.04);
-}
 
 /* ══════════════════════════════════════════════════════
    ONBOARDING — STEP HEADER
@@ -301,12 +291,10 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    # ── Multi-step onboarding form (centred card) ─────────────────────────────
+    # ── Multi-step onboarding form (centred via column gutter) ───────────────
     _, form_col, _ = st.columns([1, 6, 1])
     with form_col:
-        st.markdown('<div class="onb-card">', unsafe_allow_html=True)
         preferences = render_preference_form()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # ── New form submission → clear cache, run pipeline ───────────────────────
     if preferences is not None:
