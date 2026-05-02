@@ -23,7 +23,7 @@ from src.ui.feedback import (
     load_itinerary_state,
     save_itinerary_state,
 )
-from src.ui.forms import render_preference_form, render_sample_buttons
+from src.ui.forms import render_preference_form
 from src.ui.itinerary_view import render_itinerary
 from src.validation.checks import validate_and_fix_itinerary
 
@@ -197,13 +197,13 @@ div[data-testid="stPills"] button:hover:not([aria-selected="true"]) {
 }
 
 /* ══════════════════════════════════════════════════════
-   PRESET CARDS (bordered containers)
+   BORDERED CONTAINERS (venue cards)
 ══════════════════════════════════════════════════════ */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 14px !important; border: 1px solid #E2E8F0 !important;
     background: white !important;
     box-shadow: 0 1px 4px rgba(0,0,0,.05) !important;
-    transition: box-shadow .2s ease, border-color .2s ease;
+    transition: box-shadow .2s ease;
     overflow: hidden;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:hover {
@@ -301,14 +301,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    # ── Preset quick-start cards ──────────────────────────────────────────────
-    render_sample_buttons()
-
-    st.divider()
-
     # ── Multi-step onboarding form (centred card) ─────────────────────────────
-    # The onb-card CSS centres and constrains the form to 680 px max-width.
-    # We use a single-column layout here so the form card doesn't stretch.
     _, form_col, _ = st.columns([1, 6, 1])
     with form_col:
         st.markdown('<div class="onb-card">', unsafe_allow_html=True)

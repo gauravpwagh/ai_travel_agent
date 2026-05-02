@@ -5,9 +5,6 @@
   1 — Travel Style   (budget, pace via st.pills)
   2 — Interests      (multi-select via st.pills)
   3 — Review & Go    (summary card, optional free-text, generate)
-
-Preset cards sit above the steps.  Clicking one pre-fills all step state
-and jumps straight to the Review step with a "✓ Selected" visual.
 """
 from __future__ import annotations
 
@@ -55,35 +52,10 @@ PACE_DESCS: dict[str, str] = {
     "packed":   "6+ stops/day — maximise every hour",
 }
 
-SAMPLE_INPUTS: dict[str, dict] = {
-    "🍽️ Foodie Weekend": {
-        "destination": "Goa, India",
-        "days": 3, "party_size": 2,
-        "budget_tier": "mid-range",
-        "interests": ["food", "beaches", "nightlife"],
-        "pace": "relaxed",
-    },
-    "🏛️ Culture Explorer": {
-        "destination": "Goa, India",
-        "days": 5, "party_size": 1,
-        "budget_tier": "budget",
-        "interests": ["history", "art", "nature"],
-        "pace": "moderate",
-    },
-    "👨‍👩‍👧‍👦 Family Vacation": {
-        "destination": "Goa, India",
-        "days": 4, "party_size": 4,
-        "budget_tier": "mid-range",
-        "interests": ["beaches", "nature", "food", "shopping"],
-        "pace": "relaxed",
-    },
-}
-
 # ── Session-state keys ────────────────────────────────────────────────────────
 
-_STEP  = "_form_step"
-_DATA  = "_form_data"
-_PKEY  = "_selected_preset"
+_STEP = "_form_step"
+_DATA = "_form_data"
 
 STEPS = [
     {"icon": "🌏", "title": "Where & When"},
@@ -105,8 +77,6 @@ def _init() -> None:
             "interests": [],
             "free_text": "",
         }
-    if _PKEY not in st.session_state:
-        st.session_state[_PKEY] = None
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -125,27 +95,6 @@ def render_preference_form() -> dict | None:
     if step == 2: return _step_interests(data)
     if step == 3: return _step_review(data)
     return None
-
-
-def render_sample_buttons() -> None:
-    """Preset cards — selected one shows a ✓ Selected primary button."""
-    selected = st.session_state.get(_PKEY)
-    st.markdown(
-        "<p style='margin:0 0 .6rem;font-size:.75rem;font-weight:700;"
-        "text-transform:uppercase;letter-spacing:.8px;color:#94A3B8'>Quick Start</p>",
-        unsafe_allow_html=True,
-    )
-    cols = st.columns(len(SAMPLE_INPUTS))
-    for col, (label, preset) in zip(cols, SAMPLE_INPUTS.items()):
-        with col:
-            is_sel = selected == label
-            with st.container(border=True):
-                _preset_card_body(label, preset, is_sel)
-                btn_label = "✓  Selected" if is_sel else "Use this  →"
-                btn_type  = "primary" if is_sel else "secondary"
-                if st.button(btn_label, key=f"preset_{label}",
-                             use_container_width=True, type=btn_type):
-                    _load_preset(label, preset)
 
 
 # ── Progress indicator ────────────────────────────────────────────────────────
@@ -407,7 +356,6 @@ def _step_review(data: dict) -> dict | None:
 
     # Reset form to step 0 so it's clean when shown above the new itinerary
     st.session_state[_STEP] = 0
-    st.session_state[_PKEY] = None
     return prefs
 
 
@@ -427,43 +375,9 @@ def _step_header(icon: str, title: str, subtitle: str) -> None:
     st.markdown("<div style='height:.75rem'></div>", unsafe_allow_html=True)
 
 
-def _preset_card_body(label: str, preset: dict, selected: bool) -> None:
-    title_color = "#0EA5E9" if selected else "#0F172A"
-    budget_lbl  = BUDGET_LABELS.get(preset["budget_tier"], preset["budget_tier"])
-    pace_lbl    = PACE_LABELS.get(preset["pace"], preset["pace"])
-    ints        = "  ·  ".join(INTEREST_LABELS.get(i, i) for i in preset["interests"][:3])
-    st.markdown(
-        f'<p style="font-weight:700;font-size:.95rem;margin:0 0 .2rem;color:{title_color}">'
-        f'{label}</p>',
-        unsafe_allow_html=True,
-    )
-    st.caption(f"{preset['days']} days  ·  {budget_lbl}  ·  {pace_lbl}")
-    st.caption(f"🎯 {ints}")
-
-
 def _save_data(data: dict, next_step: int) -> None:
     st.session_state[_DATA]  = data
     st.session_state[_STEP]  = next_step
     st.rerun()
 
 
-def _load_preset(label: str, preset: dict) -> None:
-    """Fill all form state from preset and jump to Review step."""
-    st.session_state[_DATA] = {
-        "destination": preset["destination"],
-        "days":        preset["days"],
-        "party_size":  preset["party_size"],
-        "budget_tier": preset["budget_tier"],
-        "pace":        preset["pace"],
-        "interests":   list(preset["interests"]),
-        "free_text":   "",
-    }
-    st.session_state[_PKEY] = label
-    st.session_state[_STEP] = 3
-    # Sync widget state so pills/sliders show preset values if user goes back
-    st.session_state["s0_days"]       = preset["days"]
-    st.session_state["s0_party"]      = preset["party_size"]
-    st.session_state["s1_budget"]     = preset["budget_tier"]
-    st.session_state["s1_pace"]       = preset["pace"]
-    st.session_state["s2_interests"]  = list(preset["interests"])
-    st.rerun()

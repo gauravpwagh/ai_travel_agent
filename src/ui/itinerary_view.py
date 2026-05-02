@@ -91,18 +91,22 @@ def _render_day(
 
     _render_issue_banners(issues)
 
-    # Map (full width) above cards
-    render_day_map(
-        slots=slots,
-        venue_lookup=venue_lookup,
-        day_number=day["day_number"],
-        itinerary_id=itinerary_id or 0,
-    )
+    # ── Map (3) | Scrollable venue cards (2) — same height ───────────────────
+    MAP_H = 500
+    map_col, cards_col = st.columns([3, 2], gap="medium")
 
-    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+    with map_col:
+        render_day_map(
+            slots=slots,
+            venue_lookup=venue_lookup,
+            day_number=day["day_number"],
+            itinerary_id=itinerary_id or 0,
+            height=MAP_H,
+        )
 
-    # Venue cards
-    _render_venue_cards(slots, day["day_number"], itinerary_id, venue_lookup)
+    with cards_col:
+        with st.container(height=MAP_H, border=False):
+            _render_venue_cards(slots, day["day_number"], itinerary_id, venue_lookup)
 
 
 # ── Validation issue banners ──────────────────────────────────────────────────
