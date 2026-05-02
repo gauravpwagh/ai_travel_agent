@@ -150,12 +150,6 @@ def _step_where_when(data: dict) -> dict | None:
         min_value=2, max_value=7,
         value=data.get("days", 3), key="s0_days",
     )
-    # Day pip row
-    pips = "".join(
-        f'<div class="day-pip {"day-pip-on" if d == days else ""}">{d}</div>'
-        for d in range(2, 8)
-    )
-    st.markdown(f'<div class="day-pips">{pips}</div>', unsafe_allow_html=True)
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
     st.markdown("**👥 How many travellers?**")

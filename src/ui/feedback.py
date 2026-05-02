@@ -86,6 +86,7 @@ def render_feedback_buttons(
             insert_feedback(itinerary_id, venue_id, day_number, "thumbs_up")
             state.setdefault("ratings", {})[osm_id] = "up"
             st.session_state[_STATE_KEY] = state
+            st.rerun()
 
     with btn_down:
         if st.button(
@@ -97,6 +98,7 @@ def render_feedback_buttons(
             insert_feedback(itinerary_id, venue_id, day_number, "thumbs_down")
             state.setdefault("ratings", {})[osm_id] = "down"
             st.session_state[_STATE_KEY] = state
+            st.rerun()
 
     with btn_swap:
         if st.button(

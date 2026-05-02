@@ -82,8 +82,8 @@ def _render_day(
 
     st.markdown(
         f"""<div style="display:flex;align-items:center;gap:12px;
-                padding:.55rem 1rem;background:#F8FAFC;border-radius:10px;
-                border:1px solid #E2E8F0;margin-bottom:.75rem;font-size:.9rem;color:#475569">
+                padding:.55rem 1rem;background:#F0F9FF;border-radius:10px;
+                border:1px solid #BAE6FD;margin-bottom:.75rem;font-size:.9rem;color:#0284C7">
             {"&nbsp;·&nbsp;".join(summary_parts)}
         </div>""",
         unsafe_allow_html=True,

@@ -35,9 +35,9 @@ log = setup_logging()
 _CSS = """
 <style>
 /* ══════════════════════════════════════════════════════
-   BASE
+   BASE — white canvas with sky-blue accents
 ══════════════════════════════════════════════════════ */
-.stApp { background: #F1F5F9; }
+.stApp { background: #FFFFFF; }
 .block-container { padding: 2rem 2.5rem 4rem; max-width: 1280px; }
 
 h1 { font-size: 2.2rem !important; font-weight: 800 !important;
@@ -47,21 +47,22 @@ h2 { font-size: 1.35rem !important; font-weight: 700 !important;
 h3 { font-size: 1.05rem !important; font-weight: 600 !important;
      color: #1E293B !important; }
 p, li { color: #334155; }
-hr  { border-color: #E2E8F0 !important; margin: 1.25rem 0 !important; }
+hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #BAE6FD; border-radius: 3px; }
 
 /* ══════════════════════════════════════════════════════
    HERO HEADER
 ══════════════════════════════════════════════════════ */
 .travel-hero {
-    background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 55%, #4F46E5 100%);
+    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
     border-radius: 20px;
     padding: 2.25rem 2.5rem 2rem;
     margin-bottom: 1.25rem;
+    box-shadow: 0 4px 24px rgba(14,165,233,.18);
 }
 .travel-hero h1 { color: white !important; font-size: 2.3rem !important; margin: 0; }
-.travel-hero p  { color: rgba(255,255,255,.85); font-size: 1rem; margin: .4rem 0 0; }
+.travel-hero p  { color: rgba(255,255,255,.9); font-size: 1rem; margin: .4rem 0 0; }
 
 /* ══════════════════════════════════════════════════════
    ONBOARDING — PROGRESS BAR
@@ -70,28 +71,27 @@ hr  { border-color: #E2E8F0 !important; margin: 1.25rem 0 !important; }
     display: flex; align-items: flex-start; justify-content: center;
     gap: 0; padding: 1.25rem 1rem .9rem;
     background: white; border-radius: 16px;
-    border: 1px solid #E2E8F0;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    border: 1px solid #E0F2FE;
+    box-shadow: 0 1px 6px rgba(14,165,233,.07);
 }
 .step-item  { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.step-conn  { width: 56px; height: 2px; background: #E2E8F0;
+.step-conn  { width: 56px; height: 2px; background: #BAE6FD;
               margin-top: 17px; flex-shrink: 0; }
 .step-dot {
     width: 34px; height: 34px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 13px;
-    border: 2px solid #E2E8F0; background: #F8FAFC; color: #94A3B8;
+    border: 2px solid #BAE6FD; background: #F0F9FF; color: #7DD3FC;
 }
-.step-dot.done   { background: #D1FAE5; border-color: #059669; color: #059669; }
+.step-dot.done   { background: #DCFCE7; border-color: #22C55E; color: #16A34A; }
 .step-dot.active {
-    background: linear-gradient(135deg, #0EA5E9, #2563EB);
+    background: #0EA5E9;
     border-color: transparent; color: white;
-    box-shadow: 0 3px 10px rgba(14,165,233,.4);
+    box-shadow: 0 3px 12px rgba(14,165,233,.4);
 }
 .step-lbl        { font-size: .71rem; font-weight: 500; color: #94A3B8;
                    white-space: nowrap; }
 .step-lbl-active { color: #0EA5E9 !important; font-weight: 700 !important; }
-
 
 /* ══════════════════════════════════════════════════════
    ONBOARDING — STEP HEADER
@@ -107,8 +107,8 @@ hr  { border-color: #E2E8F0 !important; margin: 1.25rem 0 !important; }
 .dest-card {
     display: flex; align-items: center; gap: 1rem;
     padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%);
-    border: 2px solid #0EA5E9; border-radius: 14px;
+    background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+    border: 2px solid #7DD3FC; border-radius: 14px;
 }
 .dest-flag { font-size: 2rem; }
 .dest-name { font-weight: 700; font-size: 1rem; color: #0F172A; }
@@ -121,31 +121,15 @@ hr  { border-color: #E2E8F0 !important; margin: 1.25rem 0 !important; }
 }
 
 /* ══════════════════════════════════════════════════════
-   ONBOARDING — DAY PIPS
-══════════════════════════════════════════════════════ */
-.day-pips    { display: flex; gap: 8px; margin-top: .5rem; }
-.day-pip {
-    width: 34px; height: 34px; border-radius: 50%;
-    background: #F1F5F9; border: 2px solid #E2E8F0;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 600; font-size: .8rem; color: #94A3B8;
-}
-.day-pip-on {
-    background: linear-gradient(135deg, #0EA5E9, #2563EB);
-    border-color: transparent; color: white;
-    box-shadow: 0 3px 10px rgba(14,165,233,.4);
-}
-
-/* ══════════════════════════════════════════════════════
    ONBOARDING — SUMMARY CARD (Review step)
 ══════════════════════════════════════════════════════ */
 .sum-card {
-    background: #F8FAFC; border: 1px solid #E2E8F0;
+    background: #F0F9FF; border: 1px solid #BAE6FD;
     border-radius: 14px; padding: .9rem 1.25rem;
     display: flex; flex-direction: column; gap: .55rem;
 }
 .sum-row { display: flex; align-items: flex-start; gap: .75rem; }
-.sum-key { font-size: .82rem; color: #64748B; font-weight: 600; min-width: 120px; }
+.sum-key { font-size: .82rem; color: #0284C7; font-weight: 600; min-width: 120px; }
 .sum-val { font-size: .88rem; color: #0F172A; font-weight: 500; }
 
 /* ══════════════════════════════════════════════════════
@@ -155,17 +139,18 @@ div[data-testid="stPills"] { gap: 8px !important; flex-wrap: wrap !important; }
 div[data-testid="stPills"] button {
     border-radius: 22px !important; padding: .45rem 1.15rem !important;
     font-size: .88rem !important; font-weight: 600 !important;
-    border: 2px solid #E2E8F0 !important;
-    background: white !important; color: #475569 !important;
+    border: 2px solid #BAE6FD !important;
+    background: white !important; color: #0284C7 !important;
     transition: all .15s ease !important;
 }
 div[data-testid="stPills"] button[aria-selected="true"] {
-    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
+    background: #0EA5E9 !important;
     border-color: transparent !important; color: white !important;
     box-shadow: 0 3px 10px rgba(14,165,233,.35) !important;
 }
 div[data-testid="stPills"] button:hover:not([aria-selected="true"]) {
-    border-color: #94A3B8 !important; color: #1E293B !important;
+    border-color: #0EA5E9 !important; color: #0284C7 !important;
+    background: #F0F9FF !important;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -173,49 +158,54 @@ div[data-testid="stPills"] button:hover:not([aria-selected="true"]) {
 ══════════════════════════════════════════════════════ */
 .stButton > button {
     border-radius: 10px; font-weight: 600;
-    border: 1.5px solid #E2E8F0; transition: all .15s ease;
+    border: 1.5px solid #BAE6FD; transition: all .15s ease;
+    color: #0284C7;
 }
 .stButton > button[kind="primary"],
 .stButton > button[data-testid="baseButton-primary"] {
-    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
+    background: #0EA5E9 !important;
     border: none !important; color: white !important;
     font-size: .95rem !important;
+    box-shadow: 0 2px 10px rgba(14,165,233,.28) !important;
 }
 .stButton > button[kind="primary"]:hover {
     transform: translateY(-1px) !important;
-    box-shadow: 0 5px 18px rgba(37,99,235,.38) !important;
+    box-shadow: 0 5px 18px rgba(14,165,233,.42) !important;
+    background: #0284C7 !important;
 }
 
 /* ══════════════════════════════════════════════════════
    BORDERED CONTAINERS (venue cards)
 ══════════════════════════════════════════════════════ */
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    border-radius: 14px !important; border: 1px solid #E2E8F0 !important;
+    border-radius: 14px !important; border: 1px solid #E0F2FE !important;
     background: white !important;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05) !important;
+    box-shadow: 0 1px 4px rgba(14,165,233,.06) !important;
     transition: box-shadow .2s ease;
     overflow: hidden;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,.09) !important;
+    box-shadow: 0 4px 16px rgba(14,165,233,.14) !important;
+    border-color: #BAE6FD !important;
 }
 
 /* ══════════════════════════════════════════════════════
    ITINERARY TABS
 ══════════════════════════════════════════════════════ */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 4px; background: white; border-radius: 12px;
-    padding: 4px; border: 1px solid #E2E8F0;
-    box-shadow: 0 1px 3px rgba(0,0,0,.05); margin-bottom: .5rem;
+    gap: 4px; background: #F0F9FF; border-radius: 12px;
+    padding: 4px; border: 1px solid #BAE6FD;
+    box-shadow: 0 1px 4px rgba(14,165,233,.08); margin-bottom: .5rem;
 }
 .stTabs [data-baseweb="tab"] {
     border-radius: 8px; padding: 8px 20px;
-    font-weight: 600; font-size: .88rem; color: #64748B;
+    font-weight: 600; font-size: .88rem; color: #0284C7;
     border: none !important; background: transparent; transition: all .15s;
 }
 .stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, #0EA5E9, #2563EB) !important;
+    background: #0EA5E9 !important;
     color: white !important;
+    box-shadow: 0 2px 8px rgba(14,165,233,.3) !important;
 }
 .stTabs [data-baseweb="tab-panel"] { padding-top: .75rem; }
 
@@ -224,19 +214,21 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {
 ══════════════════════════════════════════════════════ */
 .feedback-row .stButton > button {
     border-radius: 8px; font-size: .8rem; font-weight: 600;
-    border: 1.5px solid #E2E8F0; background: #F8FAFC; color: #64748B;
+    border: 1.5px solid #BAE6FD; background: #F0F9FF; color: #0284C7;
 }
-.feedback-row .stButton > button:hover { border-color: #94A3B8; background: white; }
+.feedback-row .stButton > button:hover {
+    border-color: #0EA5E9; background: white; color: #0EA5E9;
+}
 .leg-connector {
     display: flex; align-items: center; gap: 8px;
-    margin: 2px 0 2px 4px; color: #94A3B8; font-size: .8rem;
+    margin: 2px 0 2px 4px; color: #7DD3FC; font-size: .8rem;
 }
 
 /* ══════════════════════════════════════════════════════
    MISC
 ══════════════════════════════════════════════════════ */
 .stSuccess, .stInfo, .stWarning, .stError { border-radius: 10px !important; }
-.stExpander { border-radius: 10px !important; border: 1px solid #E2E8F0 !important; }
+.stExpander { border-radius: 10px !important; border: 1px solid #E0F2FE !important; }
 details[open] > summary { font-weight: 600; }
 </style>
 """
@@ -311,9 +303,10 @@ def main() -> None:
         dest = state["preferences"]["destination"]
         days = state["preferences"]["days"]
         st.markdown(
-            f"""<div style="background:white;border-radius:14px;padding:1rem 1.5rem;
-                margin:1rem 0 .5rem;border:1px solid #E2E8F0;
-                box-shadow:0 1px 4px rgba(0,0,0,.05)">
+            f"""<div style="background:linear-gradient(135deg,#F0F9FF,#E0F2FE);
+                border-radius:14px;padding:1rem 1.5rem;
+                margin:1rem 0 .5rem;border:1px solid #BAE6FD;
+                box-shadow:0 2px 10px rgba(14,165,233,.1)">
                 <span style="font-size:1.2rem;font-weight:700;color:#0F172A">
                 ✅ Your {days}-day itinerary for <span style="color:#0EA5E9">{dest}</span> is ready!</span>
             </div>""",
