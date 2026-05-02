@@ -1,10 +1,12 @@
-"""Streamlit entrypoint for the AI Travel Itinerary Generator.
+"""Streamlit entrypoint — 3-page flow.
 
-Session-state caching (Phase 2.4): the generated itinerary is stored in
-st.session_state after the pipeline completes. Feedback button clicks trigger
-a Streamlit rerun, but the form is not re-submitted so preferences is None —
-the app reads from session state and re-renders without re-running the pipeline.
-A new form submission clears the cache and runs the pipeline fresh.
+  Page 1 (welcome)   — landing hero + feature cards + "Let's Go" CTA
+  Page 2 (form)      — multi-step onboarding form → Generate
+  Page 3 (itinerary) — day tabs, map + venue cards, feedback buttons
+
+Navigation is driven by st.session_state["_page"].
+The generated itinerary is cached in st.session_state so feedback reruns
+never re-run the expensive pipeline.
 """
 from __future__ import annotations
 
@@ -29,13 +31,15 @@ from src.validation.checks import validate_and_fix_itinerary
 
 log = setup_logging()
 
+_PAGE = "_page"   # "welcome" | "form" | "itinerary"
+
 
 # ── Global CSS ────────────────────────────────────────────────────────────────
 
 _CSS = """
 <style>
 /* ══════════════════════════════════════════════════════
-   BASE — white canvas with sky-blue accents
+   BASE — white canvas, sky-blue accents
 ══════════════════════════════════════════════════════ */
 .stApp { background: #FFFFFF; }
 .block-container { padding: 2rem 2.5rem 4rem; max-width: 1280px; }
@@ -52,16 +56,64 @@ hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
 ::-webkit-scrollbar-thumb { background: #BAE6FD; border-radius: 3px; }
 
 /* ══════════════════════════════════════════════════════
-   HERO HEADER
+   PAGE 1 — WELCOME HERO
 ══════════════════════════════════════════════════════ */
-.travel-hero {
-    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
-    border-radius: 20px;
-    padding: 1.6rem 2.5rem;
-    margin-bottom: 1.25rem;
-    box-shadow: 0 4px 24px rgba(14,165,233,.18);
+.wlc-hero {
+    text-align: center;
+    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 60%, #0284C7 100%);
+    border-radius: 24px;
+    padding: 4rem 2rem 3.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(14,165,233,.22);
 }
-.travel-hero h1 { color: white !important; font-size: 2.1rem !important; margin: 0; }
+.wlc-hero h1 {
+    color: white !important;
+    font-size: 3rem !important;
+    margin: .4rem 0 .9rem;
+    letter-spacing: -.5px;
+}
+.wlc-hero p {
+    color: rgba(255,255,255,.9);
+    font-size: 1.1rem;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.65;
+}
+.wlc-emoji { font-size: 3.5rem; line-height: 1; }
+
+/* ══════════════════════════════════════════════════════
+   PAGE 1 — FEATURE CARDS
+══════════════════════════════════════════════════════ */
+.feat-card {
+    background: white;
+    border: 1px solid #E0F2FE;
+    border-radius: 18px;
+    padding: 1.6rem 1.25rem 1.4rem;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(14,165,233,.07);
+    height: 100%;
+    transition: box-shadow .2s, border-color .2s;
+}
+.feat-card:hover {
+    box-shadow: 0 6px 20px rgba(14,165,233,.15);
+    border-color: #7DD3FC;
+}
+.feat-icon  { font-size: 2.2rem; margin-bottom: .6rem; }
+.feat-title { font-weight: 700; font-size: 1rem; color: #0F172A; margin-bottom: .4rem; }
+.feat-desc  { font-size: .85rem; color: #64748B; line-height: 1.55; }
+
+/* ══════════════════════════════════════════════════════
+   PAGE 2 — FORM TOP-NAV
+══════════════════════════════════════════════════════ */
+.form-topnav {
+    display: flex; align-items: center; gap: .75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: .75rem;
+    border-bottom: 1px solid #E0F2FE;
+}
+.form-topnav-title {
+    font-weight: 700; font-size: 1.1rem; color: #0F172A;
+}
 
 /* ══════════════════════════════════════════════════════
    ONBOARDING — PROGRESS BAR
@@ -84,20 +136,16 @@ hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
 }
 .step-dot.done   { background: #DCFCE7; border-color: #22C55E; color: #16A34A; }
 .step-dot.active {
-    background: #0EA5E9;
-    border-color: transparent; color: white;
+    background: #0EA5E9; border-color: transparent; color: white;
     box-shadow: 0 3px 12px rgba(14,165,233,.4);
 }
-.step-lbl        { font-size: .71rem; font-weight: 500; color: #94A3B8;
-                   white-space: nowrap; }
+.step-lbl        { font-size: .71rem; font-weight: 500; color: #94A3B8; white-space: nowrap; }
 .step-lbl-active { color: #0EA5E9 !important; font-weight: 700 !important; }
 
 /* ══════════════════════════════════════════════════════
    ONBOARDING — STEP HEADER
 ══════════════════════════════════════════════════════ */
-.step-hdr {
-    display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;
-}
+.step-hdr { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
 .step-hdr-icon { font-size: 2.4rem; line-height: 1; }
 
 /* ══════════════════════════════════════════════════════
@@ -109,9 +157,9 @@ hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
     background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
     border: 2px solid #7DD3FC; border-radius: 14px;
 }
-.dest-flag { font-size: 2rem; }
-.dest-name { font-weight: 700; font-size: 1rem; color: #0F172A; }
-.dest-tags { font-size: .8rem; color: #64748B; margin-top: 2px; }
+.dest-flag  { font-size: 2rem; }
+.dest-name  { font-weight: 700; font-size: 1rem; color: #0F172A; }
+.dest-tags  { font-size: .8rem; color: #64748B; margin-top: 2px; }
 .dest-check {
     margin-left: auto; background: #0EA5E9; color: white;
     width: 24px; height: 24px; border-radius: 50%;
@@ -132,7 +180,7 @@ hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
 .sum-val { font-size: .88rem; color: #0F172A; font-weight: 500; }
 
 /* ══════════════════════════════════════════════════════
-   st.pills — larger, more app-like
+   st.pills
 ══════════════════════════════════════════════════════ */
 div[data-testid="stPills"] { gap: 8px !important; flex-wrap: wrap !important; }
 div[data-testid="stPills"] button {
@@ -143,9 +191,8 @@ div[data-testid="stPills"] button {
     transition: all .15s ease !important;
 }
 div[data-testid="stPills"] button[aria-selected="true"] {
-    background: #0EA5E9 !important;
-    border-color: transparent !important; color: white !important;
-    box-shadow: 0 3px 10px rgba(14,165,233,.35) !important;
+    background: #0EA5E9 !important; border-color: transparent !important;
+    color: white !important; box-shadow: 0 3px 10px rgba(14,165,233,.35) !important;
 }
 div[data-testid="stPills"] button:hover:not([aria-selected="true"]) {
     border-color: #0EA5E9 !important; color: #0284C7 !important;
@@ -153,18 +200,16 @@ div[data-testid="stPills"] button:hover:not([aria-selected="true"]) {
 }
 
 /* ══════════════════════════════════════════════════════
-   NAVIGATION BUTTONS (Back / Next)
+   BUTTONS
 ══════════════════════════════════════════════════════ */
 .stButton > button {
     border-radius: 10px; font-weight: 600;
-    border: 1.5px solid #BAE6FD; transition: all .15s ease;
-    color: #0284C7;
+    border: 1.5px solid #BAE6FD; transition: all .15s ease; color: #0284C7;
 }
 .stButton > button[kind="primary"],
 .stButton > button[data-testid="baseButton-primary"] {
-    background: #0EA5E9 !important;
-    border: none !important; color: white !important;
-    font-size: .95rem !important;
+    background: #0EA5E9 !important; border: none !important;
+    color: white !important; font-size: .95rem !important;
     box-shadow: 0 2px 10px rgba(14,165,233,.28) !important;
 }
 .stButton > button[kind="primary"]:hover {
@@ -174,14 +219,26 @@ div[data-testid="stPills"] button:hover:not([aria-selected="true"]) {
 }
 
 /* ══════════════════════════════════════════════════════
+   PAGE 3 — ITINERARY HEADER BAR
+══════════════════════════════════════════════════════ */
+.itin-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(135deg, #F0F9FF, #E0F2FE);
+    border: 1px solid #BAE6FD; border-radius: 16px;
+    padding: 1rem 1.5rem; margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(14,165,233,.1);
+}
+.itin-header-text { font-size: 1.15rem; font-weight: 700; color: #0F172A; }
+.itin-header-text span { color: #0EA5E9; }
+
+/* ══════════════════════════════════════════════════════
    BORDERED CONTAINERS (venue cards)
 ══════════════════════════════════════════════════════ */
 div[data-testid="stVerticalBlockBorderWrapper"] {
     border-radius: 14px !important; border: 1px solid #E0F2FE !important;
     background: white !important;
     box-shadow: 0 1px 4px rgba(14,165,233,.06) !important;
-    transition: box-shadow .2s ease;
-    overflow: hidden;
+    transition: box-shadow .2s ease; overflow: hidden;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:hover {
     box-shadow: 0 4px 16px rgba(14,165,233,.14) !important;
@@ -202,8 +259,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {
     border: none !important; background: transparent; transition: all .15s;
 }
 .stTabs [aria-selected="true"] {
-    background: #0EA5E9 !important;
-    color: white !important;
+    background: #0EA5E9 !important; color: white !important;
     box-shadow: 0 2px 8px rgba(14,165,233,.3) !important;
 }
 .stTabs [data-baseweb="tab-panel"] { padding-top: .75rem; }
@@ -238,7 +294,6 @@ def _inject_css() -> None:
 
 
 def _scroll_to_top() -> None:
-    """Inject JS to scroll the Streamlit page back to the top after swap rerun."""
     st_comp.html(
         """<script>
         (function() {
@@ -259,6 +314,119 @@ def _scroll_to_top() -> None:
     )
 
 
+def _go(page: str) -> None:
+    """Navigate to a page and immediately rerun."""
+    st.session_state[_PAGE] = page
+    st.rerun()
+
+
+# ── Pages ─────────────────────────────────────────────────────────────────────
+
+def _page_welcome() -> None:
+    # ── Hero ──────────────────────────────────────────────────────────────────
+    st.markdown(
+        """<div class="wlc-hero">
+            <div class="wlc-emoji">✈️</div>
+            <h1>Hi! Let's plan your trip.</h1>
+            <p>Answer a few quick questions and we'll build a personalised
+               day-by-day itinerary with real venues, maps, and travel
+               times — in under 2 minutes.</p>
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
+    # ── Feature cards ──────────────────────────────────────────────────────────
+    features = [
+        ("📍", "Real venues", "Every place is sourced from OpenStreetMap — zero hallucinations."),
+        ("🗺️", "Interactive maps", "Day-by-day maps with numbered stops and walking times."),
+        ("🎯", "Preference-matched", "AI ranks venues by how well they fit your travel style."),
+    ]
+    for col, (icon, title, desc) in zip(st.columns(3, gap="large"), features):
+        with col:
+            st.markdown(
+                f"""<div class="feat-card">
+                    <div class="feat-icon">{icon}</div>
+                    <div class="feat-title">{title}</div>
+                    <div class="feat-desc">{desc}</div>
+                </div>""",
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<div style='height:2.5rem'></div>", unsafe_allow_html=True)
+
+    # ── CTA button ─────────────────────────────────────────────────────────────
+    _, btn_col, _ = st.columns([2, 3, 2])
+    with btn_col:
+        if st.button("Let's go  →", type="primary",
+                     use_container_width=True, key="wlc_go"):
+            _go("form")
+
+
+def _page_form() -> None:
+    # ── Top nav ────────────────────────────────────────────────────────────────
+    if st.button("← Back", key="form_back_btn"):
+        _go("welcome")
+
+    st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
+
+    # ── Centred multi-step form ────────────────────────────────────────────────
+    _, form_col, _ = st.columns([1, 6, 1])
+    with form_col:
+        preferences = render_preference_form()
+
+    # ── On final submit: run pipeline → itinerary page ─────────────────────────
+    if preferences is not None:
+        clear_itinerary_state()
+        _run_pipeline(preferences)
+        _go("itinerary")
+
+
+def _page_itinerary() -> None:
+    # Guard: if session state was lost (e.g. hard reload) bounce back to welcome
+    state = load_itinerary_state()
+    if not state:
+        _go("welcome")
+        return
+
+    # ── Scroll-to-top after venue swap ─────────────────────────────────────────
+    if st.session_state.pop("_scroll_top", False):
+        _scroll_to_top()
+
+    dest = state["preferences"]["destination"]
+    days = state["preferences"]["days"]
+
+    # ── Header bar ─────────────────────────────────────────────────────────────
+    hdr_left, hdr_right = st.columns([5, 2])
+    with hdr_left:
+        st.markdown(
+            f"""<div class="itin-header">
+                <span class="itin-header-text">
+                    ✅ Your {days}-day itinerary for
+                    <span>{dest}</span> is ready!
+                </span>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+    with hdr_right:
+        st.markdown("<div style='height:.35rem'></div>", unsafe_allow_html=True)
+        if st.button("← Plan another trip",
+                     use_container_width=True, key="plan_again"):
+            clear_itinerary_state()
+            _go("welcome")
+
+    # ── Itinerary tabs ──────────────────────────────────────────────────────────
+    render_itinerary(
+        itinerary=state["itinerary"],
+        clusters=state["clusters"],
+        issues=state["issues"],
+        itinerary_id=state["itinerary_id"],
+        venue_lookup=state["venue_lookup"],
+    )
+
+    with st.expander("🔧 Debug — preferences", expanded=False):
+        st.json(state["preferences"])
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -268,56 +436,18 @@ def main() -> None:
         layout="wide",
         initial_sidebar_state="collapsed",
     )
-
     _inject_css()
     init_db()
 
-    # Hero header
-    st.markdown(
-        """<div class="travel-hero">
-            <h1>👋 Hi! Let's plan your trip.</h1>
-        </div>""",
-        unsafe_allow_html=True,
-    )
-
-    # ── Multi-step onboarding form (centred via column gutter) ───────────────
-    _, form_col, _ = st.columns([1, 6, 1])
-    with form_col:
-        preferences = render_preference_form()
-
-    # ── New form submission → clear cache, run pipeline ───────────────────────
-    if preferences is not None:
-        clear_itinerary_state()
-        _run_pipeline(preferences)
-
-    # ── Scroll-to-top after swap ──────────────────────────────────────────────
-    if st.session_state.pop("_scroll_top", False):
-        _scroll_to_top()
-
-    # ── Render from session state (new generation OR feedback rerun) ──────────
-    state = load_itinerary_state()
-    if state:
-        dest = state["preferences"]["destination"]
-        days = state["preferences"]["days"]
-        st.markdown(
-            f"""<div style="background:linear-gradient(135deg,#F0F9FF,#E0F2FE);
-                border-radius:14px;padding:1rem 1.5rem;
-                margin:1rem 0 .5rem;border:1px solid #BAE6FD;
-                box-shadow:0 2px 10px rgba(14,165,233,.1)">
-                <span style="font-size:1.2rem;font-weight:700;color:#0F172A">
-                ✅ Your {days}-day itinerary for <span style="color:#0EA5E9">{dest}</span> is ready!</span>
-            </div>""",
-            unsafe_allow_html=True,
-        )
-        render_itinerary(
-            itinerary=state["itinerary"],
-            clusters=state["clusters"],
-            issues=state["issues"],
-            itinerary_id=state["itinerary_id"],
-            venue_lookup=state["venue_lookup"],
-        )
-        with st.expander("🔧 Debug — preferences", expanded=False):
-            st.json(state["preferences"])
+    page = st.session_state.get(_PAGE, "welcome")
+    if page == "welcome":
+        _page_welcome()
+    elif page == "form":
+        _page_form()
+    elif page == "itinerary":
+        _page_itinerary()
+    else:
+        _go("welcome")
 
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
