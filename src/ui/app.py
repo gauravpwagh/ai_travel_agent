@@ -57,12 +57,11 @@ hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
 .travel-hero {
     background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
     border-radius: 20px;
-    padding: 2.25rem 2.5rem 2rem;
+    padding: 1.6rem 2.5rem;
     margin-bottom: 1.25rem;
     box-shadow: 0 4px 24px rgba(14,165,233,.18);
 }
-.travel-hero h1 { color: white !important; font-size: 2.3rem !important; margin: 0; }
-.travel-hero p  { color: rgba(255,255,255,.9); font-size: 1rem; margin: .4rem 0 0; }
+.travel-hero h1 { color: white !important; font-size: 2.1rem !important; margin: 0; }
 
 /* ══════════════════════════════════════════════════════
    ONBOARDING — PROGRESS BAR
@@ -276,9 +275,7 @@ def main() -> None:
     # Hero header
     st.markdown(
         """<div class="travel-hero">
-            <h1>✈️ AI Travel Planner</h1>
-            <p>Tell us your preferences and get a day-by-day itinerary with real venues,
-               maps, and travel times — in under 2 minutes.</p>
+            <h1>👋 Hi! Let's plan your trip.</h1>
         </div>""",
         unsafe_allow_html=True,
     )
