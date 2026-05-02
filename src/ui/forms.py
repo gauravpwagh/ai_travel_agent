@@ -90,50 +90,66 @@ def render_preference_form() -> dict | None:
     """
     _apply_preset_if_requested()
 
-    st.header("Plan Your Trip")
+    st.markdown(
+        "<h2 style='margin-bottom:.25rem'>Plan Your Trip</h2>",
+        unsafe_allow_html=True,
+    )
 
     with st.form("preference_form", clear_on_submit=False):
-        col1, col2 = st.columns(2)
-
-        with col1:
+        # ── Row 1: destination / duration / party size ────────────────────
+        c1, c2, c3 = st.columns([2, 2, 1])
+        with c1:
             destination = st.selectbox(
-                "Destination",
+                "🌏 Destination",
                 options=DESTINATIONS,
                 index=_form_default("destination", DESTINATIONS, DESTINATIONS[0]),
                 help="More cities coming soon.",
             )
-
+        with c2:
             days = st.slider(
-                "Trip Duration (days)",
+                "📅 Trip Duration (days)",
                 min_value=2,
                 max_value=7,
                 value=_form_default("days", None, 3),
             )
-
+        with c3:
             party_size = st.number_input(
-                "Number of Travellers",
+                "👥 Travellers",
                 min_value=1,
                 max_value=20,
                 value=_form_default("party_size", None, 2),
                 step=1,
             )
 
-        with col2:
+        st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
+
+        # ── Row 2: budget / pace ──────────────────────────────────────────
+        col_b, col_p = st.columns(2)
+        with col_b:
             budget_tier = st.radio(
-                "Budget",
+                "💰 Budget",
                 options=BUDGET_OPTIONS,
                 format_func=lambda k: BUDGET_LABELS[k],
                 index=_form_default("budget_tier", BUDGET_OPTIONS, "mid-range"),
+                horizontal=False,
             )
-
+        with col_p:
             pace = st.radio(
-                "Pace",
+                "⚡ Pace",
                 options=PACE_OPTIONS,
                 format_func=lambda k: PACE_LABELS[k],
                 index=_form_default("pace", PACE_OPTIONS, "moderate"),
+                horizontal=False,
             )
 
-        st.markdown("**Tell us about your ideal trip** *(optional — the AI will extract extra preferences)*")
+        st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
+
+        # ── Free-text ─────────────────────────────────────────────────────
+        st.markdown(
+            "<p style='margin-bottom:.3rem;font-weight:600;color:#1E293B'>"
+            "✍️ Describe your ideal trip <span style='font-weight:400;color:#94A3B8'>(optional — AI will extract preferences)</span></p>",
+            unsafe_allow_html=True,
+        )
         free_text = st.text_area(
             label="free_text",
             label_visibility="collapsed",
@@ -141,11 +157,18 @@ def render_preference_form() -> dict | None:
                 "e.g. 'I want a relaxed beach holiday with great seafood. "
                 "We\'re a couple on a mid-range budget — no rushing around.'"
             ),
-            height=90,
+            height=85,
             key="free_text_input",
         )
 
-        st.markdown("**Interests** *(pick at least one — or describe them above)*")
+        st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
+
+        # ── Interests ─────────────────────────────────────────────────────
+        st.markdown(
+            "<p style='margin-bottom:.3rem;font-weight:600;color:#1E293B'>"
+            "🎯 Interests <span style='font-weight:400;color:#94A3B8'>(pick at least one)</span></p>",
+            unsafe_allow_html=True,
+        )
         interest_cols = st.columns(4)
         selected_interests: list[str] = []
         preset_interests: list[str] = st.session_state.get("_preset", {}).get(
@@ -160,8 +183,10 @@ def render_preference_form() -> dict | None:
             ):
                 selected_interests.append(interest)
 
+        st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+
         submitted = st.form_submit_button(
-            "Generate Itinerary ✈️", use_container_width=True, type="primary"
+            "✈️  Generate My Itinerary", use_container_width=True, type="primary"
         )
 
     # Clear preset after form renders so it doesn't sticky
@@ -207,10 +232,14 @@ def render_preference_form() -> dict | None:
 
 def render_sample_buttons() -> None:
     """Render preset buttons above the form to pre-populate it."""
-    st.markdown("##### Quick start — try a preset:")
+    st.markdown(
+        "<p style='margin-bottom:.4rem;font-size:.85rem;color:#94A3B8;font-weight:600;"
+        "text-transform:uppercase;letter-spacing:.5px'>Quick start</p>",
+        unsafe_allow_html=True,
+    )
     cols = st.columns(len(SAMPLE_INPUTS))
     for col, (label, preset) in zip(cols, SAMPLE_INPUTS.items()):
-        if col.button(label, use_container_width=True):
+        if col.button(f"✦ {label}", use_container_width=True):
             st.session_state["_preset"] = preset
             st.rerun()
 

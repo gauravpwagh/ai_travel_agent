@@ -105,8 +105,11 @@ def render_feedback_buttons(
             use_container_width=True,
         ):
             insert_feedback(itinerary_id, venue_id, day_number, "swap")
-            with st.spinner(f"Finding a replacement venue…"):
+            with st.spinner("Finding a replacement venue…"):
                 _do_swap(day_number, slot_idx, osm_id)
+            # Signal app.py to scroll back to top after the rerun so the
+            # user isn't left staring at the bottom of the page.
+            st.session_state["_scroll_top"] = True
             st.rerun()
 
 

@@ -1,6 +1,7 @@
 """Day-tab itinerary display: map (left) + venue card list (right).
 
 Phase 2.4: each venue card now carries 👍 👎 🔄 feedback buttons.
+UI refresh: modern card layout, category pills, timeline connector.
 """
 from __future__ import annotations
 
@@ -11,21 +12,28 @@ from src.ui.feedback import render_feedback_buttons
 from src.ui.map_view import render_day_map
 from src.validation.checks import ValidationIssue
 
-# Category → emoji badge shown on venue cards
-_CATEGORY_EMOJI: dict[str, str] = {
-    "food":       "🍽️",
-    "cafe":       "☕",
-    "beach":      "🏖️",
-    "nature":     "🌿",
-    "history":    "🏛️",
-    "art":        "🎨",
-    "museum":     "🎨",
-    "nightlife":  "🎉",
-    "shopping":   "🛍️",
-    "attraction": "⭐",
-    "viewpoint":  "🔭",
+# Category → emoji + accent colour used on card left border
+_CATEGORY_META: dict[str, dict] = {
+    "food":       {"emoji": "🍽️", "colour": "#E05C2A"},
+    "cafe":       {"emoji": "☕",  "colour": "#D97706"},
+    "beach":      {"emoji": "🏖️", "colour": "#0284C7"},
+    "nature":     {"emoji": "🌿", "colour": "#16A34A"},
+    "history":    {"emoji": "🏛️", "colour": "#92400E"},
+    "art":        {"emoji": "🎨", "colour": "#7C3AED"},
+    "museum":     {"emoji": "🎨", "colour": "#7C3AED"},
+    "nightlife":  {"emoji": "🎉", "colour": "#4338CA"},
+    "shopping":   {"emoji": "🛍️", "colour": "#0E7490"},
+    "attraction": {"emoji": "⭐", "colour": "#0F766E"},
+    "viewpoint":  {"emoji": "🔭", "colour": "#0F766E"},
 }
-_DEFAULT_EMOJI = "📍"
+_DEFAULT_META = {"emoji": "📍", "colour": "#475569"}
+
+_CHECK_ICON: dict[str, str] = {
+    "hallucination": "🔍",
+    "opening_hours": "🕐",
+    "transit":       "🚶",
+    "rating":        "⭐",
+}
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -42,12 +50,12 @@ def render_itinerary(
     issues = issues or []
 
     tab_labels = [
-        f"Day {d['day_number']} · {d.get('theme', '')}" for d in itinerary
+        f"Day {d['day_number']}  {d.get('theme', '')}" for d in itinerary
     ]
     tabs = st.tabs(tab_labels)
 
     for tab, day in zip(tabs, itinerary):
-        day_issues = [iss for iss in issues if iss.day_number == day["day_number"]]
+        day_issues = [i for i in issues if i.day_number == day["day_number"]]
         with tab:
             _render_day(day, _venue_lookup, day_issues, itinerary_id)
 
@@ -65,30 +73,39 @@ def _render_day(
         st.warning("No venues for this day.")
         return
 
+    # Day summary bar
+    total_min = day_total_transit_minutes(day)
+    n_venues  = len(slots)
+    summary_parts = [f"**{n_venues} stops**"]
+    if total_min > 0:
+        summary_parts.append(f"🚶 ~{total_min} min transit")
+
+    st.markdown(
+        f"""<div style="display:flex;align-items:center;gap:12px;
+                padding:.55rem 1rem;background:#F8FAFC;border-radius:10px;
+                border:1px solid #E2E8F0;margin-bottom:.75rem;font-size:.9rem;color:#475569">
+            {"&nbsp;·&nbsp;".join(summary_parts)}
+        </div>""",
+        unsafe_allow_html=True,
+    )
+
     _render_issue_banners(issues)
 
-    total_min = day_total_transit_minutes(day)
-    if total_min > 0:
-        st.caption(f"🚶 ~{total_min} min total transit for this day")
+    # Map (full width) above cards
+    render_day_map(
+        slots=slots,
+        venue_lookup=venue_lookup,
+        day_number=day["day_number"],
+        itinerary_id=itinerary_id or 0,
+    )
 
-    map_col, list_col = st.columns([3, 2], gap="large")
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
 
-    with map_col:
-        render_day_map(slots, venue_lookup)
-
-    with list_col:
-        _render_venue_cards(slots, day["day_number"], itinerary_id, venue_lookup)
+    # Venue cards
+    _render_venue_cards(slots, day["day_number"], itinerary_id, venue_lookup)
 
 
 # ── Validation issue banners ──────────────────────────────────────────────────
-
-_CHECK_ICON: dict[str, str] = {
-    "hallucination": "🔍",
-    "opening_hours": "🕐",
-    "transit":       "🚶",
-    "rating":        "⭐",
-}
-
 
 def _render_issue_banners(issues: list[ValidationIssue]) -> None:
     if not issues:
@@ -104,7 +121,7 @@ def _render_issue_banners(issues: list[ValidationIssue]) -> None:
                 st.warning(f"{icon} {iss.message}")
 
 
-# ── Venue card list ───────────────────────────────────────────────────────────
+# ── Venue cards ───────────────────────────────────────────────────────────────
 
 def _render_venue_cards(
     slots:        list[dict],
@@ -129,80 +146,89 @@ def _render_card(
     time     = slot.get("time", "")
     cat      = slot.get("category", "")
     desc     = slot.get("description", "")
-    note     = slot.get("travel_note")
     duration = slot.get("duration_minutes")
     osm_id   = slot.get("osm_id", "")
-    emoji    = _CATEGORY_EMOJI.get(cat, _DEFAULT_EMOJI)
+    meta     = _CATEGORY_META.get(cat, _DEFAULT_META)
+    colour   = meta["colour"]
+    emoji    = meta["emoji"]
 
-    # Number badge + time
-    badge_col, time_col = st.columns([1, 4])
-    with badge_col:
-        st.markdown(
-            f'<div style="background:#4a90d9;color:#fff;border-radius:50%;'
-            f'width:32px;height:32px;display:flex;align-items:center;'
-            f'justify-content:center;font-weight:700;font-size:14px">{n}</div>',
-            unsafe_allow_html=True,
-        )
-    with time_col:
-        dur_str = f" · {duration} min" if duration else ""
-        st.markdown(f"**{time}**{dur_str}")
+    with st.container(border=True):
+        # Top row: number badge + venue name + time + category pill
+        hdr_left, hdr_right = st.columns([5, 2])
 
-    # Venue name + category badge
-    st.markdown(
-        f"**{name}** &nbsp;"
-        f'<span style="background:#f0f2f6;padding:2px 8px;border-radius:10px;'
-        f'font-size:11px;color:#555">{emoji} {cat}</span>',
-        unsafe_allow_html=True,
-    )
+        with hdr_left:
+            dur_str = f"<span style='color:#94A3B8;font-size:.8rem'> · {duration} min</span>" if duration else ""
+            st.markdown(
+                f"""<div style="display:flex;align-items:center;gap:10px">
+                    <div style="background:{colour};color:#fff;border-radius:50%;
+                        min-width:28px;width:28px;height:28px;display:flex;
+                        align-items:center;justify-content:center;
+                        font-weight:700;font-size:12px;
+                        box-shadow:0 2px 6px {colour}55">{n}</div>
+                    <div>
+                        <span style="font-weight:700;font-size:.97rem;color:#0F172A">{name}</span>
+                        {dur_str}
+                    </div>
+                </div>""",
+                unsafe_allow_html=True,
+            )
 
-    if desc:
-        st.caption(desc)
+        with hdr_right:
+            st.markdown(
+                f"""<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;padding-top:2px">
+                    <span style="background:#F1F5F9;border:1px solid #E2E8F0;
+                        padding:2px 10px;border-radius:20px;
+                        font-size:.75rem;font-weight:600;color:#475569;white-space:nowrap">
+                        {emoji} {cat}
+                    </span>
+                    <span style="font-size:.82rem;font-weight:600;color:#0EA5E9;white-space:nowrap">
+                        🕐 {time}
+                    </span>
+                </div>""",
+                unsafe_allow_html=True,
+            )
 
-    if note:
-        st.markdown(
-            f'<p style="color:#888;font-size:12px;margin-top:2px">🚶 {note}</p>',
-            unsafe_allow_html=True,
-        )
+        # Description
+        if desc:
+            st.markdown(
+                f'<p style="margin:.4rem 0 .1rem;font-size:.85rem;color:#475569;line-height:1.5">{desc}</p>',
+                unsafe_allow_html=True,
+            )
 
-    # Feedback buttons
-    if itinerary_id is not None and osm_id:
-        render_feedback_buttons(
-            day_number=day_number,
-            slot_idx=slot_idx,
-            osm_id=osm_id,
-            itinerary_id=itinerary_id,
-            venue_lookup=venue_lookup,
-        )
-
-    st.markdown(
-        "<hr style='margin:10px 0;border:none;border-top:1px solid #eee'>",
-        unsafe_allow_html=True,
-    )
+        # Feedback buttons
+        if itinerary_id is not None and osm_id:
+            st.markdown('<div class="feedback-row">', unsafe_allow_html=True)
+            render_feedback_buttons(
+                day_number=day_number,
+                slot_idx=slot_idx,
+                osm_id=osm_id,
+                itinerary_id=itinerary_id,
+                venue_lookup=venue_lookup,
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
 
 
 def _render_leg_connector(slot: dict) -> None:
-    """Render a compact travel-time strip between two venue cards."""
+    """Compact travel-time strip between consecutive venue cards."""
     leg = slot.get("travel_to_next")
     if not leg:
         return
-
     mins     = leg.get("duration_min", 0)
     dist_m   = leg.get("distance_m", 0)
     source   = leg.get("source", "")
     dist_str = f"{dist_m / 1000:.1f} km" if dist_m >= 1000 else f"{dist_m} m"
-    est_tag  = " *(est.)*" if source == "haversine" else ""
+    est_tag  = " <i style='color:#CBD5E1'>(est.)</i>" if source == "haversine" else ""
 
     st.markdown(
-        f'<div style="display:flex;align-items:center;gap:8px;'
-        f'margin:4px 0 4px 8px;color:#888;font-size:12px">'
-        f"<span>🚶</span>"
-        f"<span><b>{mins} min</b> · {dist_str}{est_tag}</span>"
-        f"</div>",
+        f"""<div class="leg-connector">
+            <span style="color:#CBD5E1">┆</span>
+            <span>🚶 <b>{mins} min</b> · {dist_str}{est_tag}</span>
+        </div>""",
         unsafe_allow_html=True,
     )
 
 
-# ── Venue lookup ──────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _build_venue_lookup(clusters: list[list[dict]]) -> dict[str, dict]:
     lookup: dict[str, dict] = {}
