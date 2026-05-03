@@ -7,7 +7,9 @@
   3 — Review & Go    (summary card, optional free-text, generate)
 """
 from __future__ import annotations
+import re
 
+import groq as groq_lib
 import streamlit as st
 
 from src.generation.extractor import extract_preferences, extraction_summary, merge_preferences
@@ -332,14 +334,23 @@ def _step_review(data: dict) -> dict | None:
 
     # Free-text extraction + merge
     if data.get("free_text"):
-        with st.spinner("✨ Reading your description…"):
-            extracted = extract_preferences(data["free_text"])
-        prefs = merge_preferences(prefs, extracted)
-        summary = extraction_summary(extracted)
-        if summary:
-            added = prefs.get("_extracted_interests", [])
-            badge = f"  ·  added: **{', '.join(added)}**" if added else ""
-            st.info(f"✨ {summary}{badge}")
+        try:
+            with st.spinner("✨ Reading your description…"):
+                extracted = extract_preferences(data["free_text"])
+            prefs = merge_preferences(prefs, extracted)
+            summary = extraction_summary(extracted)
+            if summary:
+                added = prefs.get("_extracted_interests", [])
+                badge = f"  ·  added: **{', '.join(added)}**" if added else ""
+                st.info(f"✨ {summary}{badge}")
+        except groq_lib.RateLimitError as exc:
+            match = re.search(r"try again in ([^\.]+)", str(exc), re.IGNORECASE)
+            wait  = match.group(1).strip() if match else "a few minutes"
+            st.error(
+                f"**Daily AI quota reached** — free-text analysis skipped.  \n"
+                f"⏳ Please try again in **{wait}**, or continue without the extra description."
+            )
+            # Proceed without the free-text extraction rather than blocking the user
 
     if not prefs.get("interests"):
         st.error("Please select at least one interest, or describe your trip above.")

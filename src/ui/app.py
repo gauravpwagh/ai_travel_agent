@@ -13,6 +13,8 @@ from __future__ import annotations
 import streamlit as st
 import streamlit.components.v1 as st_comp
 
+import groq as groq_lib
+
 from src.clustering.geo_clusters import cluster_venues
 from src.config import setup_logging
 from src.db import get_venues_by_destination, init_db, insert_itinerary
@@ -302,6 +304,22 @@ def _restore_tab(tab_index: int) -> None:
     )
 
 
+def _show_rate_limit_error(exc: Exception) -> None:
+    """Parse Groq 429 response and show a human-friendly Streamlit error."""
+    import re
+    msg = str(exc)
+    # Try to extract "Please try again in Xm Ys" from the error body
+    match = re.search(r"try again in ([^\.]+)", msg, re.IGNORECASE)
+    wait = match.group(1).strip() if match else "a few minutes"
+    st.error(
+        f"**Daily AI quota reached.** "
+        f"The free Groq API allows 100,000 tokens per day — today's limit is used up.  \n\n"
+        f"⏳ Please try again in **{wait}**.  \n\n"
+        f"_Tip: you can get more quota by upgrading at "
+        f"[console.groq.com](https://console.groq.com/settings/billing)._"
+    )
+
+
 def _go(page: str) -> None:
     """Navigate to a page, scroll to top, and rerun."""
     st.session_state[_PAGE] = page
@@ -460,6 +478,10 @@ def _run_pipeline(preferences: dict) -> None:
     ):
         try:
             itinerary = build_itinerary(clusters, preferences)
+        except groq_lib.RateLimitError as exc:
+            _show_rate_limit_error(exc)
+            log.warning(f"Groq rate limit hit during build_itinerary: {exc}")
+            return
         except Exception as exc:
             st.error(f"Itinerary generation failed: {exc}")
             log.exception("build_itinerary failed")
