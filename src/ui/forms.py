@@ -16,7 +16,7 @@ from src.generation.extractor import extract_preferences, extraction_summary, me
 
 DESTINATIONS: list[str] = ["Goa, India"]
 
-INTERESTS: list[str] = ["food", "history", "nature", "nightlife", "shopping", "art", "beaches"]
+INTERESTS: list[str] = ["food", "history", "nature", "nightlife", "shopping", "art"]
 
 INTEREST_LABELS: dict[str, str] = {
     "food":      "🍽️ Food & Dining",
@@ -25,7 +25,6 @@ INTEREST_LABELS: dict[str, str] = {
     "nightlife": "🎉 Nightlife",
     "shopping":  "🛍️ Shopping",
     "art":       "🎨 Art & Museums",
-    "beaches":   "🏖️ Beaches",
 }
 
 BUDGET_OPTIONS: list[str] = ["budget", "mid-range", "luxury"]
