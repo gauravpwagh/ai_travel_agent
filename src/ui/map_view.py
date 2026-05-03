@@ -35,6 +35,27 @@ _FIT_PADDING = (40, 40)
 _MAX_ZOOM = 16
 
 
+def _bounds_zoom(coords: list[tuple[float, float]]) -> int:
+    """Return a sensible Leaflet zoom_start from the coordinate spread.
+
+    This is used as the *initial* zoom so that maps in hidden tab panels
+    (where Leaflet can't measure the container and fit_bounds silently
+    falls back) still open at a reasonable level.
+    Thresholds are calibrated for a ~500 px tall map column.
+    """
+    if len(coords) <= 1:
+        return 15
+    lat_span = max(c[0] for c in coords) - min(c[0] for c in coords)
+    lon_span = max(c[1] for c in coords) - min(c[1] for c in coords)
+    span = max(lat_span, lon_span)
+    if span < 0.004:  return 15
+    if span < 0.008:  return 14
+    if span < 0.016:  return 13
+    if span < 0.032:  return 12
+    if span < 0.065:  return 11
+    return 10
+
+
 def render_day_map(
     slots:        list[dict],
     venue_lookup: dict[str, dict],
@@ -65,7 +86,7 @@ def render_day_map(
 
     m = folium.Map(
         location=[centre_lat, centre_lon],
-        zoom_start=14,          # overridden by fit_bounds below
+        zoom_start=_bounds_zoom(coords),   # pre-computed so hidden tabs start correctly
         tiles="CartoDB positron",
         control_scale=True,
     )
