@@ -294,7 +294,7 @@ def _restore_tab(tab_index: int) -> None:
                     setTimeout(tryClick, 100);
                 }}
             }}
-            setTimeout(tryClick, 200);
+            setTimeout(tryClick, 50);
         }})();
         </script>""",
         height=0,
