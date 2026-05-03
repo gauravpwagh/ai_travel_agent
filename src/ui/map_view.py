@@ -1,12 +1,11 @@
 """Folium map rendering for one day's itinerary slots.
 
-Bug fixes (Phase 2.8+):
-- Each day's map gets a unique ``key`` so Streamlit does not reuse the
-  same widget instance across tabs, which was causing zoom-reset on tab
-  switch.
-- ``fit_bounds`` is always called (even for a single venue) so the
-  map shows an appropriate zoom level rather than the hard-coded
-  zoom_start default.
+Zoom strategy: fit_bounds is NOT used because Leaflet's fitBounds() JS
+call fires on map init — when a tab is hidden (display:none, 0×0 px
+container) it overwrites zoom_start with a broken value.  Instead,
+_bounds_zoom() derives the right zoom level from the coordinate spread
+and sets it as zoom_start; location is the centroid.  This works for
+all tabs, visible or hidden.
 """
 from __future__ import annotations
 
@@ -29,10 +28,6 @@ _CATEGORY_COLOUR: dict[str, str] = {
 }
 _DEFAULT_COLOUR = "#475569"
 
-# Padding (pixels) added around fit_bounds
-_FIT_PADDING = (40, 40)
-# Maximum zoom level when fit_bounds would zoom in too far (e.g. 2 venues 50 m apart)
-_MAX_ZOOM = 16
 
 
 def _bounds_zoom(coords: list[tuple[float, float]]) -> int:
@@ -118,18 +113,12 @@ def render_day_map(
             tooltip=f"{n}. {slot.get('venue_name', '')}",
         ).add_to(m)
 
-    # Always fit bounds — prevents zoom_start=14 showing on tab switch.
-    # For a single venue, pad generously so streets around it are visible.
-    if len(coords) == 1:
-        lat, lon = coords[0]
-        pad = 0.005     # ~500 m each side
-        sw = [lat - pad, lon - pad]
-        ne = [lat + pad, lon + pad]
-    else:
-        sw = [min(c[0] for c in coords), min(c[1] for c in coords)]
-        ne = [max(c[0] for c in coords), max(c[1] for c in coords)]
-
-    m.fit_bounds([sw, ne], padding=_FIT_PADDING, max_zoom=_MAX_ZOOM)
+    # NOTE: fit_bounds is intentionally NOT called here.
+    # Folium's fit_bounds emits a Leaflet fitBounds() JS call that fires on
+    # map init. When the tab is hidden (display:none, container size = 0×0),
+    # Leaflet cannot compute correct bounds and overwrites zoom_start with a
+    # broken value (commonly 0).  Using location + _bounds_zoom() as the sole
+    # zoom strategy works correctly for all tabs, visible or hidden.
 
     # Unique key per (itinerary, day) prevents Streamlit from reusing the
     # same Leaflet widget across tabs — the root cause of the zoom-reset bug.
