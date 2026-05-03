@@ -7,12 +7,8 @@
   3 — Review & Go    (summary card, optional free-text, generate)
 """
 from __future__ import annotations
-import re
 
-import groq as groq_lib
 import streamlit as st
-
-from src.generation.extractor import extract_preferences, extraction_summary, merge_preferences
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -62,7 +58,6 @@ STEPS = [
     {"icon": "🌏", "title": "Where & When"},
     {"icon": "✨", "title": "Travel Style"},
     {"icon": "🎯", "title": "Interests"},
-    {"icon": "✍️",  "title": "Review & Go"},
 ]
 
 
@@ -119,7 +114,6 @@ def render_preference_form() -> dict | None:
     if step == 0: return _step_where_when(data)
     if step == 1: return _step_style(data)
     if step == 2: return _step_interests(data)
-    if step == 3: return _step_review(data)
     return None
 
 
@@ -274,118 +268,23 @@ def _step_interests(data: dict) -> dict | None:
         if st.button("←  Back", use_container_width=True, key="back2"):
             _save_data(data, next_step=1)
     with nc:
-        if st.button("Next  →  Review", type="primary",
+        if st.button("Save & Review  →", type="primary",
                      use_container_width=True, key="next2"):
             data["interests"] = list(selected or [])
-            _save_data(data, next_step=3)
+            st.session_state[_DATA] = data
+            st.session_state[_STEP] = 0
+            # Return prefs so _page_form() can update _extracted_prefs
+            # and navigate back to the summary page.
+            return {
+                "destination": data["destination"],
+                "days":        data["days"],
+                "party_size":  data["party_size"],
+                "budget_tier": data["budget_tier"],
+                "pace":        data["pace"],
+                "interests":   data["interests"],
+                "free_text":   data.get("free_text", ""),
+            }
     return None
-
-
-# ── Step 3 — Review & Generate ────────────────────────────────────────────────
-
-def _step_review(data: dict) -> dict | None:
-    _step_header("bi-clipboard2-check", "Review & Generate",
-                 "Check your choices and add any extra detail (optional).")
-
-    # Summary card
-    interests_str = "  ·  ".join(INTEREST_LABELS.get(i, i) for i in data.get("interests", []))
-    rows = [
-        ('<i class="bi bi-geo-alt-fill"></i> Destination', data.get("destination", "")),
-        ('<i class="bi bi-calendar3"></i> Duration',
-         f"{data.get('days', 0)} days  ·  "
-         f"{data.get('party_size', 1)} traveller{'s' if data.get('party_size', 1) > 1 else ''}"),
-        ('<i class="bi bi-wallet2"></i> Budget', BUDGET_LABELS.get(data.get("budget_tier", ""), "")),
-        ('<i class="bi bi-lightning-charge"></i> Pace', PACE_LABELS.get(data.get("pace", ""), "")),
-    ]
-    if data.get("interests"):
-        rows.append(('<i class="bi bi-heart-fill"></i> Interests', interests_str))
-
-    rows_html = "".join(
-        f'<div class="sum-row">'
-        f'  <span class="sum-key">{k}</span>'
-        f'  <span class="sum-val">{v}</span>'
-        f'</div>'
-        for k, v in rows
-    )
-    st.markdown(f'<div class="sum-card">{rows_html}</div>', unsafe_allow_html=True)
-
-    st.markdown("<div style='height:.75rem'></div>", unsafe_allow_html=True)
-
-    # Optional free text
-    st.markdown(
-        "<p style='font-weight:600;color:#1E293B;margin-bottom:.25rem'>"
-        "Anything to add?  "
-        "<span style='color:#94A3B8;font-weight:400;font-size:.88rem'>(optional — AI reads this for extra preferences)</span>"
-        "</p>",
-        unsafe_allow_html=True,
-    )
-    free_text = st.text_area(
-        "free_text_r", label_visibility="collapsed",
-        placeholder=(
-            "e.g. 'We love street art and sunset spots. "
-            "Skip museums please — prefer outdoor experiences.'"
-        ),
-        height=90,
-        value=data.get("free_text", ""),
-        key="s3_free_text",
-    )
-
-    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-
-    bc, gc = st.columns([1, 2])
-    with bc:
-        if st.button("←  Edit", use_container_width=True, key="back3"):
-            _save_data(data, next_step=2)
-    with gc:
-        generate = st.button(
-            "✈️  Generate My Itinerary",
-            type="primary", use_container_width=True, key="gen_btn",
-        )
-
-    if not generate:
-        return None
-
-    # ── Validate ──────────────────────────────────────────────────────────────
-    data["free_text"] = free_text.strip()
-
-    prefs: dict = {
-        "destination": data["destination"],
-        "days":        data["days"],
-        "party_size":  data["party_size"],
-        "budget_tier": data["budget_tier"],
-        "interests":   list(data.get("interests", [])),
-        "pace":        data["pace"],
-    }
-
-    # Free-text extraction + merge
-    if data.get("free_text"):
-        try:
-            with st.spinner("✨ Reading your description…"):
-                extracted = extract_preferences(data["free_text"])
-            prefs = merge_preferences(prefs, extracted)
-            summary = extraction_summary(extracted)
-            if summary:
-                added = prefs.get("_extracted_interests", [])
-                badge = f"  ·  added: **{', '.join(added)}**" if added else ""
-                st.info(f"✨ {summary}{badge}")
-        except groq_lib.RateLimitError as exc:
-            match = re.search(r"try again in ([^\.]+)", str(exc), re.IGNORECASE)
-            wait  = match.group(1).strip() if match else "a few minutes"
-            st.error(
-                f"**Daily AI quota reached** — free-text analysis skipped.  \n"
-                f"⏳ Please try again in **{wait}**, or continue without the extra description."
-            )
-            # Proceed without the free-text extraction rather than blocking the user
-
-    if not prefs.get("interests"):
-        st.error("Please select at least one interest, or describe your trip above.")
-        return None
-
-    prefs.pop("_extracted_interests", None)
-
-    # Reset form to step 0 so it's clean when shown above the new itinerary
-    st.session_state[_STEP] = 0
-    return prefs
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

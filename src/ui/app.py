@@ -370,7 +370,7 @@ def _page_welcome() -> None:
                 <i class="bi bi-compass"
                    style="font-size:3rem;color:#0EA5E9;display:block;margin-bottom:.75rem"></i>
                 <h1 style="font-size:2.2rem!important;margin-bottom:.4rem">
-                    Hi! Where do you want to go?
+                    Hi, let's plan your perfect trip! ✈️
                 </h1>
                 <p style="color:#64748B;font-size:1rem;margin:0 0 1.5rem">
                     Describe your trip and we'll build a personalised itinerary.
@@ -482,12 +482,10 @@ def _page_form() -> None:
     with form_col:
         preferences = render_preference_form()
 
-    # ── On final submit: run pipeline → itinerary page ─────────────────────────
+    # ── On final submit: return to summary page ──────────────────────────────────
     if preferences is not None:
-        clear_itinerary_state()
-        _run_pipeline(preferences)
-        if load_itinerary_state():   # only navigate if pipeline succeeded
-            _go("itinerary")
+        st.session_state["_extracted_prefs"] = preferences
+        _go("summary")
 
 
 def _page_itinerary() -> None:
