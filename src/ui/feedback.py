@@ -109,9 +109,10 @@ def render_feedback_buttons(
             insert_feedback(itinerary_id, venue_id, day_number, "swap")
             with st.spinner("Finding a replacement venue…"):
                 _do_swap(day_number, slot_idx, osm_id)
-            # Signal app.py to scroll back to top after the rerun so the
-            # user isn't left staring at the bottom of the page.
-            st.session_state["_scroll_top"] = True
+            # Do NOT set _scroll_top here — scrolling to top after swap
+            # moves the viewport above the tab bar, making it appear that
+            # the active tab jumped to Day 1.  Stay at the current position
+            # so the user sees the swapped card in place.
             st.rerun()
 
 
