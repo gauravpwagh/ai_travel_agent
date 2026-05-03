@@ -126,7 +126,7 @@ def _render_progress(current: int) -> None:
 # ── Step 0 — Where & When ─────────────────────────────────────────────────────
 
 def _step_where_when(data: dict) -> dict | None:
-    _step_header("🌏", "Where & When?",
+    _step_header("bi-geo-alt-fill", "Where & When?",
                  "Choose your destination and how long you want to stay.")
 
     # Destination — single option shown as a selected card
@@ -137,13 +137,13 @@ def _step_where_when(data: dict) -> dict | None:
         '    <div class="dest-name">Goa, India</div>'
         '    <div class="dest-tags">Beaches · Heritage · Nightlife</div>'
         '  </div>'
-        '  <div class="dest-check">✓</div>'
+        '  <div class="dest-check"><i class="bi bi-check-lg"></i></div>'
         '</div>',
         unsafe_allow_html=True,
     )
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-    st.markdown("**📅 How many days?**")
+    st.markdown('<p style="font-weight:700;margin-bottom:.25rem"><i class="bi bi-calendar3" style="color:#0EA5E9"></i> How many days?</p>', unsafe_allow_html=True)
 
     days = st.slider(
         "days_sl", label_visibility="collapsed",
@@ -152,7 +152,7 @@ def _step_where_when(data: dict) -> dict | None:
     )
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-    st.markdown("**👥 How many travellers?**")
+    st.markdown('<p style="font-weight:700;margin-bottom:.25rem"><i class="bi bi-people-fill" style="color:#0EA5E9"></i> How many travellers?</p>', unsafe_allow_html=True)
     party_size = st.number_input(
         "party_ni", label_visibility="collapsed",
         min_value=1, max_value=20,
@@ -171,10 +171,10 @@ def _step_where_when(data: dict) -> dict | None:
 # ── Step 1 — Travel Style ─────────────────────────────────────────────────────
 
 def _step_style(data: dict) -> dict | None:
-    _step_header("✨", "Travel Style",
+    _step_header("bi-sliders", "Travel Style",
                  "Pick a budget and pace that suit you.")
 
-    st.markdown("**💰 Budget**")
+    st.markdown('<p style="font-weight:700;margin-bottom:.25rem"><i class="bi bi-wallet2" style="color:#0EA5E9"></i> Budget</p>', unsafe_allow_html=True)
     budget = st.pills(
         "budget_p", label_visibility="collapsed",
         options=BUDGET_OPTIONS,
@@ -187,7 +187,7 @@ def _step_style(data: dict) -> dict | None:
         st.caption(f"*{BUDGET_DESCS[budget]}*")
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-    st.markdown("**⚡ Pace**")
+    st.markdown('<p style="font-weight:700;margin-bottom:.25rem"><i class="bi bi-lightning-charge" style="color:#0EA5E9"></i> Pace</p>', unsafe_allow_html=True)
     pace = st.pills(
         "pace_p", label_visibility="collapsed",
         options=PACE_OPTIONS,
@@ -221,7 +221,7 @@ def _step_style(data: dict) -> dict | None:
 # ── Step 2 — Interests ────────────────────────────────────────────────────────
 
 def _step_interests(data: dict) -> dict | None:
-    _step_header("🎯", "What Do You Love?",
+    _step_header("bi-heart-fill", "What Do You Love?",
                  "Pick every experience you want in your itinerary.")
 
     selected = st.pills(
@@ -258,21 +258,21 @@ def _step_interests(data: dict) -> dict | None:
 # ── Step 3 — Review & Generate ────────────────────────────────────────────────
 
 def _step_review(data: dict) -> dict | None:
-    _step_header("✍️", "Review & Generate",
+    _step_header("bi-clipboard2-check", "Review & Generate",
                  "Check your choices and add any extra detail (optional).")
 
     # Summary card
     interests_str = "  ·  ".join(INTEREST_LABELS.get(i, i) for i in data.get("interests", []))
     rows = [
-        ("🌏 Destination", data.get("destination", "")),
-        ("📅 Duration",
+        ('<i class="bi bi-geo-alt-fill"></i> Destination', data.get("destination", "")),
+        ('<i class="bi bi-calendar3"></i> Duration',
          f"{data.get('days', 0)} days  ·  "
          f"{data.get('party_size', 1)} traveller{'s' if data.get('party_size', 1) > 1 else ''}"),
-        ("💰 Budget", BUDGET_LABELS.get(data.get("budget_tier", ""), "")),
-        ("⚡ Pace",   PACE_LABELS.get(data.get("pace", ""), "")),
+        ('<i class="bi bi-wallet2"></i> Budget', BUDGET_LABELS.get(data.get("budget_tier", ""), "")),
+        ('<i class="bi bi-lightning-charge"></i> Pace', PACE_LABELS.get(data.get("pace", ""), "")),
     ]
     if data.get("interests"):
-        rows.append(("🎯 Interests", interests_str))
+        rows.append(('<i class="bi bi-heart-fill"></i> Interests', interests_str))
 
     rows_html = "".join(
         f'<div class="sum-row">'
@@ -356,9 +356,10 @@ def _step_review(data: dict) -> dict | None:
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _step_header(icon: str, title: str, subtitle: str) -> None:
+    # icon is a Bootstrap Icons class name, e.g. "bi-geo-alt-fill"
     st.markdown(
         f'<div class="step-hdr">'
-        f'  <span class="step-hdr-icon">{icon}</span>'
+        f'  <i class="bi {icon} step-hdr-icon"></i>'
         f'  <div>'
         f'    <h2 style="margin:0">{title}</h2>'
         f'    <p style="margin:.25rem 0 0;color:#64748B;font-size:.9rem">{subtitle}</p>'

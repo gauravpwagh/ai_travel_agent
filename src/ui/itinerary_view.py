@@ -12,21 +12,21 @@ from src.ui.feedback import render_feedback_buttons
 from src.ui.map_view import render_day_map
 from src.validation.checks import ValidationIssue
 
-# Category → emoji + accent colour used on card left border
+# Category → Bootstrap Icon class + accent colour
 _CATEGORY_META: dict[str, dict] = {
-    "food":       {"emoji": "🍽️", "colour": "#E05C2A"},
-    "cafe":       {"emoji": "☕",  "colour": "#D97706"},
-    "beach":      {"emoji": "🏖️", "colour": "#0284C7"},
-    "nature":     {"emoji": "🌿", "colour": "#16A34A"},
-    "history":    {"emoji": "🏛️", "colour": "#92400E"},
-    "art":        {"emoji": "🎨", "colour": "#7C3AED"},
-    "museum":     {"emoji": "🎨", "colour": "#7C3AED"},
-    "nightlife":  {"emoji": "🎉", "colour": "#4338CA"},
-    "shopping":   {"emoji": "🛍️", "colour": "#0E7490"},
-    "attraction": {"emoji": "⭐", "colour": "#0F766E"},
-    "viewpoint":  {"emoji": "🔭", "colour": "#0F766E"},
+    "food":       {"icon": "bi-cup-hot",          "colour": "#E05C2A"},
+    "cafe":       {"icon": "bi-cup-hot",           "colour": "#D97706"},
+    "beach":      {"icon": "bi-umbrella",          "colour": "#0284C7"},
+    "nature":     {"icon": "bi-tree",              "colour": "#16A34A"},
+    "history":    {"icon": "bi-bank",              "colour": "#92400E"},
+    "art":        {"icon": "bi-palette",           "colour": "#7C3AED"},
+    "museum":     {"icon": "bi-palette",           "colour": "#7C3AED"},
+    "nightlife":  {"icon": "bi-moon-stars",        "colour": "#4338CA"},
+    "shopping":   {"icon": "bi-bag",               "colour": "#0E7490"},
+    "attraction": {"icon": "bi-star-fill",         "colour": "#0F766E"},
+    "viewpoint":  {"icon": "bi-binoculars",        "colour": "#0F766E"},
 }
-_DEFAULT_META = {"emoji": "📍", "colour": "#475569"}
+_DEFAULT_META = {"icon": "bi-pin-map-fill", "colour": "#475569"}
 
 _CHECK_ICON: dict[str, str] = {
     "hallucination": "🔍",
@@ -76,9 +76,9 @@ def _render_day(
     # Day summary bar
     total_min = day_total_transit_minutes(day)
     n_venues  = len(slots)
-    summary_parts = [f"**{n_venues} stops**"]
+    summary_parts = [f"<strong>{n_venues} stops</strong>"]
     if total_min > 0:
-        summary_parts.append(f"🚶 ~{total_min} min transit")
+        summary_parts.append(f'<i class="bi bi-person-walking"></i> ~{total_min} min transit')
 
     st.markdown(
         f"""<div style="display:flex;align-items:center;gap:12px;
@@ -154,7 +154,7 @@ def _render_card(
     osm_id   = slot.get("osm_id", "")
     meta     = _CATEGORY_META.get(cat, _DEFAULT_META)
     colour   = meta["colour"]
-    emoji    = meta["emoji"]
+    icon_cls = meta["icon"]
 
     with st.container(border=True):
         # Top row: number badge + venue name + time + category pill
@@ -180,13 +180,13 @@ def _render_card(
         with hdr_right:
             st.markdown(
                 f"""<div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;padding-top:2px">
-                    <span style="background:#F1F5F9;border:1px solid #E2E8F0;
+                    <span style="background:#F0F9FF;border:1px solid #BAE6FD;
                         padding:2px 10px;border-radius:20px;
-                        font-size:.75rem;font-weight:600;color:#475569;white-space:nowrap">
-                        {emoji} {cat}
+                        font-size:.75rem;font-weight:600;color:{colour};white-space:nowrap">
+                        <i class="bi {icon_cls}"></i> {cat}
                     </span>
                     <span style="font-size:.82rem;font-weight:600;color:#0EA5E9;white-space:nowrap">
-                        🕐 {time}
+                        <i class="bi bi-clock"></i> {time}
                     </span>
                 </div>""",
                 unsafe_allow_html=True,
@@ -225,8 +225,8 @@ def _render_leg_connector(slot: dict) -> None:
 
     st.markdown(
         f"""<div class="leg-connector">
-            <span style="color:#CBD5E1">┆</span>
-            <span>🚶 <b>{mins} min</b> · {dist_str}{est_tag}</span>
+            <span style="color:#BAE6FD">┆</span>
+            <span><i class="bi bi-person-walking"></i> <b>{mins} min</b> · {dist_str}{est_tag}</span>
         </div>""",
         unsafe_allow_html=True,
     )

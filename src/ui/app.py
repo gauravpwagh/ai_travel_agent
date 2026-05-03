@@ -99,7 +99,13 @@ hr  { border-color: #E0F2FE !important; margin: 1.25rem 0 !important; }
    ONBOARDING — STEP HEADER
 ══════════════════════════════════════════════════════ */
 .step-hdr { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
-.step-hdr-icon { font-size: 2.4rem; line-height: 1; }
+.step-hdr-icon {
+    font-size: 1.9rem; color: #0EA5E9; line-height: 1;
+    background: #E0F2FE; border-radius: 12px;
+    width: 48px; height: 48px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
 
 /* ══════════════════════════════════════════════════════
    ONBOARDING — DESTINATION CARD
@@ -243,6 +249,11 @@ details[open] > summary { font-weight: 600; }
 
 
 def _inject_css() -> None:
+    # Bootstrap Icons font — loaded first so <i class="bi ..."> works everywhere
+    st.markdown(
+        '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">',
+        unsafe_allow_html=True,
+    )
     st.markdown(_CSS, unsafe_allow_html=True)
 
 
@@ -283,7 +294,8 @@ def _page_welcome() -> None:
     with mid:
         st.markdown(
             """<div style="text-align:center;margin-bottom:2rem">
-                <div style="font-size:3.5rem;line-height:1;margin-bottom:1rem">✈️</div>
+                <i class="bi bi-compass"
+                   style="font-size:3.2rem;color:#0EA5E9;display:block;margin-bottom:1rem"></i>
                 <h1 style="font-size:2.4rem!important;margin-bottom:.6rem">
                     Hi! Ready to explore?
                 </h1>
@@ -333,7 +345,8 @@ def _page_itinerary() -> None:
         st.markdown(
             f"""<div class="itin-header">
                 <span class="itin-header-text">
-                    ✅ Your {days}-day itinerary for
+                    <i class="bi bi-check-circle-fill" style="color:#22C55E"></i>
+                    Your {days}-day itinerary for
                     <span>{dest}</span> is ready!
                 </span>
             </div>""",
