@@ -278,6 +278,30 @@ def _scroll_to_top() -> None:
     )
 
 
+def _restore_tab(tab_index: int) -> None:
+    """Re-click a tab by 0-based index after a swap rerun resets st.tabs to 0."""
+    st_comp.html(
+        f"""<script>
+        (function() {{
+            var target = {tab_index};
+            var attempts = 0;
+            function tryClick() {{
+                var tabs = window.parent.document
+                               .querySelectorAll('[data-baseweb="tab"]');
+                if (tabs && tabs.length > target) {{
+                    tabs[target].click();
+                }} else if (attempts++ < 10) {{
+                    setTimeout(tryClick, 100);
+                }}
+            }}
+            setTimeout(tryClick, 200);
+        }})();
+        </script>""",
+        height=0,
+        scrolling=False,
+    )
+
+
 def _go(page: str) -> None:
     """Navigate to a page, scroll to top, and rerun."""
     st.session_state[_PAGE] = page
@@ -369,6 +393,14 @@ def _page_itinerary() -> None:
         itinerary_id=state["itinerary_id"],
         venue_lookup=state["venue_lookup"],
     )
+
+    # ── Restore active tab after swap rerun ────────────────────────────────────
+    # st.tabs resets to index 0 on every explicit st.rerun(). We re-click the
+    # correct tab via JS. The key is popped BEFORE the JS fires so the
+    # JS-triggered rerun doesn't inject it again (no infinite loop).
+    restore = st.session_state.pop("_restore_tab", None)
+    if restore is not None:
+        _restore_tab(restore)
 
     with st.expander("🔧 Debug — preferences", expanded=False):
         st.json(state["preferences"])
