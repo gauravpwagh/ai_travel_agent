@@ -33,8 +33,8 @@ from src.generation.prompts import (
 log = setup_logging()
 
 # Canonical allowed values — must match forms.py constants
-_VALID_INTERESTS   = {"food", "history", "nature", "nightlife", "shopping", "art", "beaches"}
-_INTEREST_ORDER    = ["food", "history", "nature", "nightlife", "shopping", "art", "beaches"]
+_VALID_INTERESTS   = {"food", "history", "nature", "nightlife", "shopping", "art"}
+_INTEREST_ORDER    = ["food", "history", "nature", "nightlife", "shopping", "art"]
 _VALID_BUDGET      = {"budget", "mid-range", "luxury"}
 _VALID_PACE        = {"relaxed", "moderate", "packed"}
 _DAYS_RANGE        = range(2, 8)   # 2-7 inclusive

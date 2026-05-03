@@ -82,6 +82,31 @@ def _init() -> None:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+# Widget keys that cache values across reruns — must be cleared when pre-filling
+_WIDGET_KEYS = ("s0_days", "s0_party", "s1_budget", "s1_pace", "s2_interests", "s3_free_text")
+
+
+def prefill_form(prefs: dict) -> None:
+    """Load extracted preferences into form state and clear all widget caches.
+
+    Called when the user clicks Edit on the summary screen.  Clearing the
+    widget keys forces each st.slider / st.pills / st.number_input to
+    re-read its value= argument from _DATA rather than its cached state.
+    """
+    st.session_state[_STEP] = 0
+    st.session_state[_DATA] = {
+        "destination": prefs.get("destination") or DESTINATIONS[0],
+        "days":        int(prefs.get("days") or 3),
+        "party_size":  int(prefs.get("party_size") or 2),
+        "budget_tier": prefs.get("budget_tier") or "mid-range",
+        "pace":        prefs.get("pace") or "moderate",
+        "interests":   list(prefs.get("interests") or []),
+        "free_text":   prefs.get("free_text") or "",
+    }
+    for key in _WIDGET_KEYS:
+        st.session_state.pop(key, None)
+
+
 def render_preference_form() -> dict | None:
     """Return preferences dict on final submit, else None."""
     _init()

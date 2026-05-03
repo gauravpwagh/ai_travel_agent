@@ -18,6 +18,7 @@ import groq as groq_lib
 from src.clustering.geo_clusters import cluster_venues
 from src.config import setup_logging
 from src.db import get_venues_by_destination, init_db, insert_itinerary
+from src.generation.extractor import extract_preferences
 from src.generation.itinerary import USER_ID, build_itinerary
 from src.matching.embeddings import embed_and_cache
 from src.matching.scoring import match_venues
@@ -27,13 +28,25 @@ from src.ui.feedback import (
     load_itinerary_state,
     save_itinerary_state,
 )
-from src.ui.forms import render_preference_form
+from src.ui.forms import (
+    BUDGET_LABELS,
+    DESTINATIONS,
+    INTEREST_LABELS,
+    PACE_LABELS,
+    prefill_form,
+    render_preference_form,
+)
 from src.ui.itinerary_view import render_itinerary
 from src.validation.checks import validate_and_fix_itinerary
 
 log = setup_logging()
 
-_PAGE = "_page"   # "welcome" | "form" | "itinerary"
+_PAGE = "_page"   # "welcome" | "summary" | "form" | "itinerary"
+
+# Shown as placeholder in the welcome text area
+_DEFAULT_TRIP_TEXT = "3 days in Goa — relaxed mix of food, nature and history"
+# Used when the AI extracts no interests from the user's text
+_DEFAULT_INTERESTS = ["food", "nature", "history"]
 
 
 # ── Global CSS ────────────────────────────────────────────────────────────────
@@ -241,6 +254,24 @@ div[data-testid="stVerticalBlockBorderWrapper"]:hover {
 }
 
 /* ══════════════════════════════════════════════════════
+   WELCOME — TEXT AREA
+══════════════════════════════════════════════════════ */
+.stTextArea textarea {
+    border: 2px solid #BAE6FD !important;
+    border-radius: 12px !important;
+    font-size: 1rem !important;
+    color: #0F172A !important;
+    background: #F8FBFF !important;
+    padding: .75rem 1rem !important;
+    line-height: 1.6 !important;
+}
+.stTextArea textarea:focus {
+    border-color: #0EA5E9 !important;
+    box-shadow: 0 0 0 3px rgba(14,165,233,.12) !important;
+    outline: none !important;
+}
+
+/* ══════════════════════════════════════════════════════
    MISC
 ══════════════════════════════════════════════════════ */
 .stSuccess, .stInfo, .stWarning, .stError { border-radius: 10px !important; }
@@ -330,34 +361,119 @@ def _go(page: str) -> None:
 # ── Pages ─────────────────────────────────────────────────────────────────────
 
 def _page_welcome() -> None:
-    st.markdown("<div style='height:6rem'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:4rem'></div>", unsafe_allow_html=True)
 
     _, mid, _ = st.columns([1, 4, 1])
     with mid:
         st.markdown(
-            """<div style="text-align:center;margin-bottom:2rem">
+            """<div style="text-align:center;margin-bottom:1.5rem">
                 <i class="bi bi-compass"
-                   style="font-size:3.2rem;color:#0EA5E9;display:block;margin-bottom:1rem"></i>
-                <h1 style="font-size:2.4rem!important;margin-bottom:.6rem">
-                    Hi! Ready to explore?
+                   style="font-size:3rem;color:#0EA5E9;display:block;margin-bottom:.75rem"></i>
+                <h1 style="font-size:2.2rem!important;margin-bottom:.4rem">
+                    Hi! Where do you want to go?
                 </h1>
-                <p style="color:#64748B;font-size:1.05rem;margin:0">
-                    Let's build your perfect day-by-day travel itinerary.
+                <p style="color:#64748B;font-size:1rem;margin:0 0 1.5rem">
+                    Describe your trip and we'll build a personalised itinerary.
                 </p>
             </div>""",
             unsafe_allow_html=True,
         )
+
+        st.text_area(
+            "trip_desc",
+            label_visibility="collapsed",
+            placeholder=_DEFAULT_TRIP_TEXT,
+            height=130,
+            key="wlc_text",
+        )
+
+        st.markdown("<div style='height:.75rem'></div>", unsafe_allow_html=True)
         _, btn_col, _ = st.columns([1, 2, 1])
         with btn_col:
-            if st.button("Let's go  →", type="primary",
-                         use_container_width=True, key="wlc_go"):
+            if st.button("Analyse  →", type="primary",
+                         use_container_width=True, key="wlc_analyse"):
+                input_text = (st.session_state.get("wlc_text") or "").strip()
+                input_text = input_text or _DEFAULT_TRIP_TEXT
+                try:
+                    with st.spinner("✨ Reading your description…"):
+                        extracted = extract_preferences(input_text)
+                except groq_lib.RateLimitError as exc:
+                    _show_rate_limit_error(exc)
+                    return
+                st.session_state["_extracted_prefs"] = _apply_defaults(extracted, input_text)
+                _go("summary")
+
+
+def _page_summary() -> None:
+    prefs = st.session_state.get("_extracted_prefs")
+    if not prefs:
+        _go("welcome")
+        return
+
+    if st.button("← Back", key="sum_back"):
+        _go("welcome")
+
+    st.markdown("<div style='height:.5rem'></div>", unsafe_allow_html=True)
+
+    _, mid, _ = st.columns([1, 4, 1])
+    with mid:
+        st.markdown(
+            """<div style="text-align:center;margin-bottom:1.5rem">
+                <i class="bi bi-lightbulb-fill"
+                   style="font-size:2.2rem;color:#0EA5E9;display:block;margin-bottom:.5rem"></i>
+                <h2 style="margin-bottom:.3rem">Here's what I found!</h2>
+                <p style="color:#64748B;font-size:.9rem;margin:0">
+                    Generate your itinerary or tweak the details first.
+                </p>
+            </div>""",
+            unsafe_allow_html=True,
+        )
+
+        # ── Summary card ──────────────────────────────────────────────────────
+        interests_str = "  ·  ".join(
+            INTEREST_LABELS.get(i, i) for i in prefs.get("interests", [])
+        ) or "—"
+        rows = [
+            ('<i class="bi bi-geo-alt-fill"></i> Destination', prefs["destination"]),
+            ('<i class="bi bi-calendar3"></i> Duration',
+             f"{prefs['days']} day{'s' if prefs['days'] != 1 else ''}  ·  "
+             f"{prefs['party_size']} traveller{'s' if prefs['party_size'] != 1 else ''}"),
+            ('<i class="bi bi-wallet2"></i> Budget',
+             BUDGET_LABELS.get(prefs["budget_tier"], prefs["budget_tier"])),
+            ('<i class="bi bi-lightning-charge"></i> Pace',
+             PACE_LABELS.get(prefs["pace"], prefs["pace"])),
+            ('<i class="bi bi-heart-fill"></i> Interests', interests_str),
+        ]
+        rows_html = "".join(
+            f'<div class="sum-row">'
+            f'  <span class="sum-key">{k}</span>'
+            f'  <span class="sum-val">{v}</span>'
+            f'</div>'
+            for k, v in rows
+        )
+        st.markdown(f'<div class="sum-card">{rows_html}</div>', unsafe_allow_html=True)
+
+        st.markdown("<div style='height:1.25rem'></div>", unsafe_allow_html=True)
+
+        # ── Action buttons ────────────────────────────────────────────────────
+        edit_col, gen_col = st.columns([1, 2])
+        with edit_col:
+            if st.button("✎  Edit", use_container_width=True, key="sum_edit"):
+                prefill_form(prefs)
                 _go("form")
+        with gen_col:
+            if st.button("✈️  Generate My Itinerary", type="primary",
+                         use_container_width=True, key="sum_gen"):
+                clear_itinerary_state()
+                _run_pipeline(prefs)
+                if load_itinerary_state():
+                    _go("itinerary")
 
 
 def _page_form() -> None:
     # ── Top nav ────────────────────────────────────────────────────────────────
     if st.button("← Back", key="form_back_btn"):
-        _go("welcome")
+        _go("summary")
 
     st.markdown("<div style='height:.25rem'></div>", unsafe_allow_html=True)
 
@@ -370,7 +486,8 @@ def _page_form() -> None:
     if preferences is not None:
         clear_itinerary_state()
         _run_pipeline(preferences)
-        _go("itinerary")
+        if load_itinerary_state():   # only navigate if pipeline succeeded
+            _go("itinerary")
 
 
 def _page_itinerary() -> None:
@@ -443,12 +560,34 @@ def main() -> None:
     page = st.session_state.get(_PAGE, "welcome")
     if page == "welcome":
         _page_welcome()
+    elif page == "summary":
+        _page_summary()
     elif page == "form":
         _page_form()
     elif page == "itinerary":
         _page_itinerary()
     else:
         _go("welcome")
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _apply_defaults(extracted: dict, original_text: str) -> dict:
+    """Fill every missing extracted field with a sensible default.
+
+    Always uses DESTINATIONS[0] because that is the only cached city.
+    Missing interests fall back to _DEFAULT_INTERESTS so generation
+    always proceeds without forcing the user to edit.
+    """
+    return {
+        "destination": DESTINATIONS[0],
+        "days":        int(extracted.get("days") or 3),
+        "party_size":  int(extracted.get("party_size") or 2),
+        "budget_tier": extracted.get("budget_tier") or "mid-range",
+        "pace":        extracted.get("pace") or "moderate",
+        "interests":   extracted.get("interests") or _DEFAULT_INTERESTS,
+        "free_text":   original_text,
+    }
 
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
