@@ -64,13 +64,13 @@ def render_feedback_buttons(
     itinerary_id: int,
     venue_lookup: dict[str, dict],
 ) -> None:
-    """Render 👍 👎 🔄 buttons for one venue slot."""
+    """Render ♥ Like / ✕ Pass / ↻ Swap buttons for one venue slot."""
     state   = st.session_state.get(_STATE_KEY, {})
     ratings = state.get("ratings", {})
     current = ratings.get(osm_id)
 
-    up_label   = "👍 Liked"   if current == "up"   else "👍"
-    down_label = "👎 Disliked" if current == "down" else "👎"
+    up_label   = "♥ Liked"  if current == "up"   else "♡ Like"
+    down_label = "✕ Passed" if current == "down" else "✕ Pass"
 
     btn_up, btn_down, btn_swap = st.columns([1, 1, 1])
 
@@ -102,7 +102,7 @@ def render_feedback_buttons(
 
     with btn_swap:
         if st.button(
-            "🔄 Swap",
+            "↻ Swap",
             key=f"swap_{itinerary_id}_{day_number}_{slot_idx}",
             use_container_width=True,
         ):

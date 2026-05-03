@@ -305,9 +305,11 @@ def _page_welcome() -> None:
             </div>""",
             unsafe_allow_html=True,
         )
-        if st.button("Let's go  →", type="primary",
-                     use_container_width=True, key="wlc_go"):
-            _go("form")
+        _, btn_col, _ = st.columns([1, 2, 1])
+        with btn_col:
+            if st.button("Let's go  →", type="primary",
+                         use_container_width=True, key="wlc_go"):
+                _go("form")
 
 
 def _page_form() -> None:
